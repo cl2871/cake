@@ -17,7 +17,7 @@
 			<div class="col-md-2 mb-1">
 			</div>
 			<div class="col-md-2 mb-1">
-				<label for="street_number">Street Number</label>
+				<label for="street_number">Street #</label>
 				<input class="form-control" id="street_number" disabled="true"></input>
 			</div>
 			<div class="col-md-6 mb-1">
@@ -65,14 +65,25 @@
 			</div>
 			<div class="col-md-2 mb-4">
 			</div>
-			<div class="col-md-2 mb-4">
+			<!--<div class="col-md-2 mb-4">
 				<label for="submission"></label>
 				<button type="submit" class="btn btn-success form-control" id="submission">Submit</button>
-			</div>
+			</div> -->
 			<div class="col-md-2 mb-4">
 			</div>
 		</div>
 	</form>
+
+	<div class="row">
+		<div class="col-md-2 mb-4">
+			</div>
+		<div class="col-md-2 mb-4">
+			<button type="button" id="yelpButton" class="btn btn-secondary btn-lg" disabled>Yelp Button</button>
+		</div>
+		<div class="col-md-2 mb-4">
+			<p id="yelpDisplay"></p>
+		</div>
+	</div>
 </div>
 
 
@@ -93,6 +104,7 @@
 		country: 'long_name',
 		postal_code: 'short_name'
 	};
+	let completeAddress, cakeStore;
 
 	function initAutocomplete() {
 		// Create the autocomplete object, restricting the search to geographical
@@ -118,10 +130,16 @@
 		// and fill the corresponding field on the form.
 		for (var i = 0; i < place.address_components.length; i++) {
 			var addressType = place.address_components[i].types[0];
+			// for places such as Brooklyn
+			if (addressType === "sublocality_level_1"){
+				addressType = "locality";
+			}
 			if (componentForm[addressType]) {
 				var val = place.address_components[i][componentForm[addressType]];
 				document.getElementById(addressType).value = val;
+				completeAddress += val;
 			}
+			document.getElementById("yelpButton").disabled = false;
 		}
 	}
 
@@ -142,8 +160,48 @@
 			});
 		}
 	}
+
+	function yelpRequest(){
+		// make a GET Request to the Yelp API and output data
+
+		const reqHeaders = new Headers();
+		reqHeaders.append("Authorization", "Bearer YELP_API");
+		reqHeaders.append("Access-Control-Allow-Origin", "*");
+
+		const init = {
+			method: "GET",
+			headers: reqHeaders,
+			mode: 'cors'
+		};
+
+		const corsProxy = "https://cors-anywhere.herokuapp.com/";
+		const url = "https://api.yelp.com/v3/businesses/search?term=cake&location="+completeAddress+"&limit=5";
+
+		const req = new Request(corsProxy + url, init);
+		fetch(req).then(function(response){
+			if (response.ok){
+				return response.json();
+			}
+			throw new Error('Network response was not ok.');
+		}).then(function(data){
+			cakeStore = data.businesses[0].name;
+			document.getElementById("yelpDisplay").textContent = cakeStore;
+		}).catch(function(error) {
+  			console.log('Problem with fetch operation: ' + error.message);
+		});
+	}
+
+	function yelpDisplay(){
+		// make a request to the Yelp API and then turn button off
+		yelpRequest();
+		document.getElementById("yelpButton").disabled = true;
+	}
+
+	// process yelp data when button is clicked
+	yelpButton.addEventListener("click", yelpDisplay);
+
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key=API_KEY&libraries=places&callback=initAutocomplete"
+<script src="https://maps.googleapis.com/maps/api/js?key=GOOGLE_API&libraries=places&callback=initAutocomplete"
 async defer></script>
 
 <!-- code sample from https://developers.google.com/maps/documentation/javascript/examples/places-autocomplete-addressform 
