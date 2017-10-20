@@ -121,6 +121,9 @@
 		// Get the place details from the autocomplete object.
 		var place = autocomplete.getPlace();
 
+		// reset completeAddress
+		completeAddress = "";
+
 		for (var component in componentForm) {
 			document.getElementById(component).value = '';
 			document.getElementById(component).disabled = false;
@@ -165,7 +168,7 @@
 		// make a GET Request to the Yelp API and output data
 
 		const reqHeaders = new Headers();
-		reqHeaders.append("Authorization", "Bearer YELP_API");
+		reqHeaders.append("Authorization", "Bearer {{YELP_KEY}}");
 		reqHeaders.append("Access-Control-Allow-Origin", "*");
 
 		const init = {
@@ -201,8 +204,17 @@
 	yelpButton.addEventListener("click", yelpDisplay);
 
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key=GOOGLE_API&libraries=places&callback=initAutocomplete"
+<script>
+	const placesLink = "https://maps.googleapis.com/maps/api/js?key={{PLACES_KEY}}&libraries=places&callback=initAutocomplete";
+	const placesScript = document.write('<script src=' + placesLink + ' async defer></' + 'script>');
+</script>
+
+<!--
+above script will generate the following script
+
+<script src="https://maps.googleapis.com/maps/api/js?key={{PLACES_KEY}}&libraries=places&callback=initAutocomplete"
 async defer></script>
+-->
 
 <!-- code sample from https://developers.google.com/maps/documentation/javascript/examples/places-autocomplete-addressform 
 under Apache 2.0 License-->

@@ -1,4 +1,4 @@
-// app for an emergency cake delivery service
+// app for a fast cake delivery service
 
 // run ./node_modules/.bin/eslint src/* to check for errors
 
@@ -9,29 +9,14 @@ const app = express();
 const path = require("path");
 //const fs = require('fs');
 
+// ---- Variables ----
 const port = process.env.port || 3000;
+const PLACES_KEY = process.env.PLACES_KEY;
+const YELP_KEY = process.env.YELP_KEY;
 
 // serve static files from public
 const publicPath = path.resolve(__dirname, "public");
 app.use(express.static(publicPath));
-
-/*function getLocation() {
-	function getPos(position){
-		const pos = {};
-		pos["latitude"] = position.coords.latitude;
-		pos["longitude"] = position.coords.longitude;
-		console.log("Pos: " + pos);
-		return pos;
-	}
-	if ("geolocation" in navigator) {
-		console.log("geo");
-		return navigator.geolocation.getCurrentPosition(getPos);
-	}
-	else {
-		console.log("Zero");
-		return 0;
-	}
-}*/
 
 
 // set view engine as handlebars
@@ -46,12 +31,7 @@ app.post('/', (req, res) => {
 });
 
 app.get('/getCake', (req, res) => {
-	/*const pos = getLocation();
-	if(pos){
-		console.log("Lat: " + pos["latitude"]);
-	}*/
-	//res.sendFile(path.join(__dirname, '../emergency_cake/public', '/html/form_google.html'));
-	res.render('form_address', {});
+	res.render('order_form', {PLACES_KEY, YELP_KEY});
 });
 
 // listen
