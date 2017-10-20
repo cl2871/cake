@@ -1,6 +1,16 @@
+<!-- 
+	html body starts here 
+	code is modified from Google Places sample code
+	code sample from https://developers.google.com/maps/documentation/javascript/examples/places-autocomplete-addressform 
+		under Apache 2.0 License
+-->
 
 <div class="container">
 	<form>
+
+		<!-- Row: Delivery Address 
+			user writes in their address that will be autofilled by the Places API
+		-->
 		<div class="row">
 			<div class="col-md-2 mb-4">
 			</div>
@@ -12,8 +22,10 @@
 			</div>
 		</div>
 
+		<!-- The following rows are filled by delivery address input -->
+
+		<!-- Row: Street Address -->
 		<div class="row">
-			<!-- <div class="col-md-2">Street address</div> -->
 			<div class="col-md-2 mb-1">
 			</div>
 			<div class="col-md-2 mb-1">
@@ -28,8 +40,10 @@
 			</div>
 		</div>
 
+		<!-- Row: City, State, and Zip Code-->
 		<div class="row">
-			<!-- <div class="col-md-2">City</div> -->
+
+			<!-- following comment left in from Google sample code -->
 
 			<!-- Note: Selection of address components in this example is typical.
 			 You may need to adjust it for the locations relevant to your app. See
@@ -41,12 +55,10 @@
 				<label for="locality">City</label>
 				<input class="form-control" id="locality" disabled="true"></input>
 			</div>
-			<!-- <div class="col-md-2">State</div> -->
 			<div class="col-md-2 mb-1">
 				<label for="administrative_area_level_1">State</label>
 				<input class="form-control" id="administrative_area_level_1" disabled="true"></input>
 			</div>
-			<!-- <div class="col-md-2">Zip code</div> -->
 			<div class="col-md-2 mb-1">
 				<label for="postal_code">Zip Code</label>
 				<input class="form-control" id="postal_code" disabled="true"></input>
@@ -55,8 +67,8 @@
 			</div>
 		</div>
 
+		<!-- Row: Country -->
 		<div class="row">
-			<!-- <div class="col-md-2 mb-3">Country</div> -->
 			<div class="col-md-2 mb-4">
 			</div>
 			<div class="col-md-4 mb-4">
@@ -65,15 +77,12 @@
 			</div>
 			<div class="col-md-2 mb-4">
 			</div>
-			<!--<div class="col-md-2 mb-4">
-				<label for="submission"></label>
-				<button type="submit" class="btn btn-success form-control" id="submission">Submit</button>
-			</div> -->
 			<div class="col-md-2 mb-4">
 			</div>
 		</div>
 	</form>
 
+	<!-- Row: Address Submit Button and Display -->
 	<div class="row">
 		<div class="col-md-2 mb-4">
 			</div>
@@ -88,6 +97,10 @@
 
 
 <script>
+	/* 	comments and code left in from code sample 
+		
+	*/ 
+
 	// This example displays an address form, using the autocomplete feature
 	// of the Google Places API to help users fill in the information.
 
@@ -167,19 +180,23 @@
 	function yelpRequest(){
 		// make a GET Request to the Yelp API and output data
 
+		// create request headers object
 		const reqHeaders = new Headers();
 		reqHeaders.append("Authorization", "Bearer {{YELP_KEY}}");
 		reqHeaders.append("Access-Control-Allow-Origin", "*");
 
+		// create init object
 		const init = {
 			method: "GET",
 			headers: reqHeaders,
 			mode: 'cors'
 		};
 
+		// proxy used for cors preflight
 		const corsProxy = "https://cors-anywhere.herokuapp.com/";
 		const url = "https://api.yelp.com/v3/businesses/search?term=cake&location="+completeAddress+"&limit=5";
 
+		// make a new Request object and use fetch to grab Yelp JSON data
 		const req = new Request(corsProxy + url, init);
 		fetch(req).then(function(response){
 			if (response.ok){
@@ -205,16 +222,12 @@
 
 </script>
 <script>
+	// this script will generate the commented script below
 	const placesLink = "https://maps.googleapis.com/maps/api/js?key={{PLACES_KEY}}&libraries=places&callback=initAutocomplete";
 	const placesScript = document.write('<script src=' + placesLink + ' async defer></' + 'script>');
 </script>
 
 <!--
-above script will generate the following script
-
 <script src="https://maps.googleapis.com/maps/api/js?key={{PLACES_KEY}}&libraries=places&callback=initAutocomplete"
 async defer></script>
 -->
-
-<!-- code sample from https://developers.google.com/maps/documentation/javascript/examples/places-autocomplete-addressform 
-under Apache 2.0 License-->

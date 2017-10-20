@@ -10,6 +10,7 @@ const path = require("path");
 //const fs = require('fs');
 
 // ---- Variables ----
+
 const port = process.env.port || 3000;
 const PLACES_KEY = process.env.PLACES_KEY;
 const YELP_KEY = process.env.YELP_KEY;
