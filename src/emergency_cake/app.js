@@ -35,6 +35,10 @@ app.get('/getCake', (req, res) => {
 	res.render('order_form', {PLACES_KEY, YELP_KEY});
 });
 
+app.get('/newBakery', (req, res) => {
+	res.render('onboarding_form', {PLACES_KEY, YELP_KEY});
+});
+
 // listen
 app.listen(port, function(){
 	console.log('Listening on port ' + port);

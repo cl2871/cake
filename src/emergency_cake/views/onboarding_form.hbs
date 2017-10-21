@@ -1,0 +1,211 @@
+
+<div class="container">
+	<form>
+
+		<div class="row">
+			<div class="col-md-2 mb-5">
+			</div>
+			<div class="col-md-8 mb-5">
+				<h2>Bakery Onboarding Form</h2>
+			</div>
+			<div class="col-md-2 mb-5">
+			</div>
+		</div>
+
+		<!-- Row: Bakery Name -->
+		<div class="row">
+			<div class="col-md-2 mb-4">
+			</div>
+			<div class="col-md-8 mb-4">
+				<label for="bakery-name">Bakery Name</label>
+				<input id="bakery-name" class="form-control" placeholder="Please enter the name of your business" type="text"></input>
+			</div>
+			<div class="col-md-2 mb-4">
+			</div>
+		</div>
+
+		<!-- Row: Bakery Address 
+			address of bakery that will be autofilled by the Places API
+		-->
+		<div class="row">
+			<div class="col-md-2 mb-4">
+			</div>
+			<div class="col-md-8 mb-4">
+				<label for="autocomplete">Business Address</label>
+				<input id="autocomplete" class="form-control" placeholder="Please enter the address of your business" onFocus="geolocate()" type="text"></input>
+			</div>
+			<div class="col-md-2 mb-4">
+			</div>
+		</div>
+
+		<!-- The following rows are filled by delivery address input -->
+
+		<!-- Row: Street Address -->
+		<div class="row">
+			<div class="col-md-2 mb-1">
+			</div>
+			<div class="col-md-2 mb-1">
+				<label for="street_number">Street #</label>
+				<input class="form-control" id="street_number" disabled="true"></input>
+			</div>
+			<div class="col-md-6 mb-1">
+				<label for="route">Route</label>
+				<input class="form-control" id="route" disabled="true"></input>
+			</div>
+			<div class="col-md-2 mb-1">
+			</div>
+		</div>
+
+		<!-- Row: City, State, and Zip Code-->
+		<div class="row">
+
+			<!-- following comment left in from Google sample code -->
+
+			<!-- Note: Selection of address components in this example is typical.
+			 You may need to adjust it for the locations relevant to your app. See
+			 https://developers.google.com/maps/documentation/javascript/examples/places-autocomplete-addressform
+			-->
+			<div class="col-md-2 mb-1">
+			</div>
+			<div class="col-md-4 mb-1">
+				<label for="locality">City</label>
+				<input class="form-control" id="locality" disabled="true"></input>
+			</div>
+			<div class="col-md-2 mb-1">
+				<label for="administrative_area_level_1">State</label>
+				<input class="form-control" id="administrative_area_level_1" disabled="true"></input>
+			</div>
+			<div class="col-md-2 mb-1">
+				<label for="postal_code">Zip Code</label>
+				<input class="form-control" id="postal_code" disabled="true"></input>
+			</div>
+			<div class="col-md-2 mb-1">
+			</div>
+		</div>
+
+		<!-- Row: Country -->
+		<div class="row">
+			<div class="col-md-2 mb-4">
+			</div>
+			<div class="col-md-4 mb-4">
+				<label for="country">Country</label>
+				<input class="form-control" id="country" disabled="true"></input>
+			</div>
+			<div class="col-md-2 mb-4">
+			</div>
+			<div class="col-md-2 mb-4">
+			</div>
+		</div>
+
+		<!-- Row: Contact Info -->
+		<div class="row">
+			<div class="col-md-2 mb-4">
+			</div>
+			<div class="col-md-4 mb-4">
+				<label for="email">Email</label>
+				<input class="form-control" id="email" type="email" name="email" placeholder="E-Mail Address"></input>
+			</div>
+			<div class="col-md-4 mb-4">
+				<label for="phone">Phone #</label>
+				<input class="form-control" id="phone" placeholder="Phone Number"></input>
+			</div>
+			<div class="col-md-2 mb-4">
+			</div>
+		</div>
+
+	</form>
+</div>
+
+
+<script>
+	/* 	comments and code left in from code sample 
+		
+	*/ 
+
+	// This example displays an address form, using the autocomplete feature
+	// of the Google Places API to help users fill in the information.
+
+	// This example requires the Places library. Include the libraries=places
+	// parameter when you first load the API. For example:
+	// <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+	var placeSearch, autocomplete;
+	var componentForm = {
+		street_number: 'short_name',
+		route: 'long_name',
+		locality: 'long_name',
+		administrative_area_level_1: 'short_name',
+		country: 'long_name',
+		postal_code: 'short_name'
+	};
+	let completeAddress, cakeStore;
+
+	function initAutocomplete() {
+		// Create the autocomplete object, restricting the search to geographical
+		// location types.
+		autocomplete = new google.maps.places.Autocomplete(
+			/** @type {!HTMLInputElement} */(document.getElementById('autocomplete')), {types: ['geocode']});
+
+		// When the user selects an address from the dropdown, populate the address
+		// fields in the form.
+		autocomplete.addListener('place_changed', fillInAddress);
+	}
+
+	function fillInAddress() {
+		// Get the place details from the autocomplete object.
+		var place = autocomplete.getPlace();
+
+		// reset completeAddress
+		completeAddress = "";
+
+		for (var component in componentForm) {
+			document.getElementById(component).value = '';
+			document.getElementById(component).disabled = false;
+		}
+
+		// Get each component of the address from the place details
+		// and fill the corresponding field on the form.
+		for (var i = 0; i < place.address_components.length; i++) {
+			var addressType = place.address_components[i].types[0];
+			// for places such as Brooklyn
+			if (addressType === "sublocality_level_1"){
+				addressType = "locality";
+			}
+			if (componentForm[addressType]) {
+				var val = place.address_components[i][componentForm[addressType]];
+				document.getElementById(addressType).value = val;
+				completeAddress += val;
+			}
+		}
+	}
+
+	// Bias the autocomplete object to the user's geographical location,
+	// as supplied by the browser's 'navigator.geolocation' object.
+	function geolocate() {
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(function(position) {
+				var geolocation = {
+					lat: position.coords.latitude,
+					lng: position.coords.longitude
+				};
+				var circle = new google.maps.Circle({
+					center: geolocation,
+					radius: position.coords.accuracy
+				});
+				autocomplete.setBounds(circle.getBounds());
+			});
+		}
+	}
+
+
+</script>
+<script>
+	// this script will generate the commented script below
+	const placesLink = "https://maps.googleapis.com/maps/api/js?key={{PLACES_KEY}}&libraries=places&callback=initAutocomplete";
+	const placesScript = document.write('<script src=' + placesLink + ' async defer></' + 'script>');
+</script>
+
+<!--
+<script src="https://maps.googleapis.com/maps/api/js?key={{PLACES_KEY}}&libraries=places&callback=initAutocomplete"
+async defer></script>
+-->
