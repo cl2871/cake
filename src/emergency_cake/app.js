@@ -7,6 +7,7 @@
 const express = require('express');
 const app = express();
 const path = require("path");
+const bodyParser = require("body-parser");
 //const fs = require('fs');
 
 // ---- Variables ----
@@ -15,13 +16,19 @@ const port = process.env.port || 3000;
 const PLACES_KEY = process.env.PLACES_KEY;
 const YELP_KEY = process.env.YELP_KEY;
 
+const fakeDB = [];
+
 // serve static files from public
 const publicPath = path.resolve(__dirname, "public");
 app.use(express.static(publicPath));
 
+//extended: false treats everything as a string
+app.use(bodyParser.urlencoded({ extended: false }));
 
 // set view engine as handlebars
 app.set('view engine', 'hbs');
+
+// ---- Routes ----
 
 app.get('/', (req, res) => {
 	res.render('cake', {});
@@ -37,6 +44,16 @@ app.get('/getCake', (req, res) => {
 
 app.get('/newBakery', (req, res) => {
 	res.render('onboarding_form', {PLACES_KEY, YELP_KEY});
+});
+
+app.post('/addBakery', (req, res) => {
+	//console.log(req.body);
+	fakeDB.push(req.body);
+	res.redirect('/newBakery');
+});
+
+app.get('/bakeries', (req, res) => {
+	res.render('bakeries', {fakeDB: fakeDB});
 });
 
 // listen
