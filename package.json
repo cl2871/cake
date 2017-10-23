@@ -4,11 +4,11 @@
   "description": "",
   "main": "src/emergency_cake/app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/emergency_cake/app.js"
   },
   "author": "",
   "license": "ISC",
-  "devDependencies": {
+  "dependencies": {
     "body-parser": "^1.18.2",
     "eslint": "^4.8.0",
     "eslint-plugin-mocha": "^4.11.0",
