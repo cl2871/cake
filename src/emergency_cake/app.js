@@ -12,7 +12,8 @@ const bodyParser = require("body-parser");
 
 // ---- Variables ----
 
-const port = process.env.port || 3000;
+// port 8081 is default for Elastic Beanstalk
+const port = process.env.port || 8081;
 const PLACES_KEY = process.env.PLACES_KEY;
 const YELP_KEY = process.env.YELP_KEY;
 
@@ -42,14 +43,14 @@ app.get('/getCake', (req, res) => {
 	res.render('order_form', {PLACES_KEY, YELP_KEY});
 });
 
-app.get('/newBakery', (req, res) => {
+app.get('/bakeries/new', (req, res) => {
 	res.render('onboarding_form', {PLACES_KEY, YELP_KEY});
 });
 
-app.post('/addBakery', (req, res) => {
+app.post('/bakeries', (req, res) => {
 	//console.log(req.body);
 	fakeDB.push(req.body);
-	res.redirect('/newBakery');
+	res.redirect('/bakeries');
 });
 
 app.get('/bakeries', (req, res) => {
