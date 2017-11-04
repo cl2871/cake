@@ -6,6 +6,9 @@ Software Configuration
    Environment Properties: PLACES_KEY, YELP_KEY
    // input api keys as environment variables
 
+Scaling
+   Environment type: Load balanced, auto scaling
+
 app.js
    port 8081
    // port that EB uses
