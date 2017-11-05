@@ -2,9 +2,9 @@
   "name": "cake",
   "version": "1.0.0",
   "description": "",
-  "main": "src/emergency_cake/app.js",
+  "main": "src/app.js",
   "scripts": {
-    "start": "node src/emergency_cake/app.js"
+    "start": "node src/app.js"
   },
   "author": "",
   "license": "ISC",

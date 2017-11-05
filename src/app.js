@@ -23,6 +23,9 @@ const fakeDB = [];
 const publicPath = path.resolve(__dirname, "public");
 app.use(express.static(publicPath));
 
+// serve views files from views
+app.set('views', path.join(__dirname, 'views'));
+
 //extended: false treats everything as a string
 app.use(bodyParser.urlencoded({ extended: false }));
 
