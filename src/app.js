@@ -8,7 +8,14 @@ const express = require('express');
 const app = express();
 const path = require("path");
 const bodyParser = require("body-parser");
+const mongoose = require('mongoose');
 //const fs = require('fs');
+
+// connect to db and utilize mongoose models
+require("./db");
+const User = mongoose.model('User');
+const Bakery = mongoose.model('Bakery');
+const Order = mongoose.model('Order');
 
 // ---- Variables ----
 
@@ -17,7 +24,7 @@ const port = process.env.port || 8081;
 const PLACES_KEY = process.env.PLACES_KEY;
 const YELP_KEY = process.env.YELP_KEY;
 
-const fakeDB = [];
+// ---- Setup ----
 
 // serve static files from public
 const publicPath = path.resolve(__dirname, "public");
@@ -52,12 +59,33 @@ app.get('/bakeries/new', (req, res) => {
 
 app.post('/bakeries', (req, res) => {
 	//console.log(req.body);
-	fakeDB.push(req.body);
-	res.redirect('/bakeries');
+	const deliver = (req.body.deliver === 'true');
+
+	const newBakery = new Bakery({
+		name: req.body.name,
+		address: req.body.address,
+		email: req.body.email,
+		password: req.body.password,
+		phone: req.body.phone,
+		deliver: deliver
+	});
+
+	newBakery.save(function(err, bakery) {
+		if (err){
+			console.log(err);
+		}
+		console.log('added bakery', bakery.name);
+		res.redirect('/bakeries');
+	});
 });
 
 app.get('/bakeries', (req, res) => {
-	res.render('bakeries', {fakeDB: fakeDB});
+	Bakery.find({}, function(err, bakeries){
+		if (err){
+			console.log(err);
+		}
+		res.render('bakeries', {bakeries: bakeries});
+	});
 });
 
 // listen
