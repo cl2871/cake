@@ -3,9 +3,6 @@
 // run ./node_modules/.bin/eslint src/* to check for errors
 
 // ---- Imports ----
-
-const express = require('express');
-const app = express();
 const path = require("path");
 const mongoose = require('mongoose');
 const yelp = require("yelp-fusion");
@@ -23,10 +20,6 @@ const data = fs.readFileSync(fn);
 const conf = JSON.parse(data);
 
 // ---- Setup ----
-
-// serve static files from public
-const publicPath = path.resolve(__dirname, "public");
-app.use(express.static(publicPath));
 
 const limit = 50;
 let offset_brah = 0;
