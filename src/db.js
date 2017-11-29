@@ -34,6 +34,10 @@ const User = new mongoose.Schema({
 
 // Bakery Schema
 const Bakery = new mongoose.Schema({
+	bakeryId: {
+		type:mongoose.Schema.Types.ObjectId, 
+		ref: 'Bakery_Auth'
+	},
 	name: {
 		type: String,
 		required: true
@@ -58,24 +62,24 @@ const Bakery = new mongoose.Schema({
 		type: String,
 		required: true
 	},
-
-	// email: {
-	// 	type: String,
-	// 	required: true
-	// },
-	// password:{
-	// 	type: String,
-	// 	required: true
-	// },
 	phone: {
 		type: String,
 		required: true
-	}//,
-	// deliver: {
-	// 	type: Boolean,
-	// 	required: true
-	// }
+	}
 });
+
+// Bakery Auth Schema
+const Bakery_Auth = new mongoose.Schema({
+	username: {
+		type: String,
+		required: true
+	},
+	password: {
+		type: String,
+		required: true
+	}
+});
+
 
 // Order Schema
 const Order = new mongoose.Schema({
@@ -96,4 +100,5 @@ const Order = new mongoose.Schema({
 // models
 mongoose.model('User', User);
 mongoose.model('Bakery', Bakery);
+mongoose.model('Bakery_Auth', Bakery_Auth);
 mongoose.model('Order', Order);
