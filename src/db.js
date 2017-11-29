@@ -8,13 +8,11 @@ const fn = path.join(__dirname, 'config.json');
 const data = fs.readFileSync(fn);
 const conf = JSON.parse(data);
 
-process.env.MONGO_PW = conf.mongo_pass;
-
-// require mongoose and connect to league database
-const MONGO_PW = process.env.MONGO_PW;
+// require mongoose and connect to cake database
+const MONGO_PW = process.env.MONGO_PW || conf.mongo_pass;
 const mongoose = require('mongoose');
-//mongoose.connect('mongodb://chrisDaddy:' + MONGO_PW + '@cake-shard-00-00-zpoh0.mongodb.net:27017,cake-shard-00-01-zpoh0.mongodb.net:27017,cake-shard-00-02-zpoh0.mongodb.net:27017/test?ssl=true&replicaSet=Cake-shard-0&authSource=admin');
-mongoose.connect('mongodb://localhost/cake');
+mongoose.connect('mongodb://chrisDaddy:' + MONGO_PW + '@cake-shard-00-00-zpoh0.mongodb.net:27017,cake-shard-00-01-zpoh0.mongodb.net:27017,cake-shard-00-02-zpoh0.mongodb.net:27017/test?ssl=true&replicaSet=Cake-shard-0&authSource=admin');
+//mongoose.connect('mongodb://localhost/cake');
 
 // User Schema
 const User = new mongoose.Schema({
@@ -89,11 +87,11 @@ const Order = new mongoose.Schema({
 	},
 	bakery: {
 		type: mongoose.Schema.Types.ObjectId,
-		ref: Bakery
+		ref: 'Bakery'
 	},
 	user: {
 		type: mongoose.Schema.Types.ObjectId,
-		ref: User
+		ref: 'User'
 	}
 });
 

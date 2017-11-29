@@ -22,31 +22,44 @@ const conf = JSON.parse(data);
 // ---- Setup ----
 
 const limit = 50;
-let offset_brah = 0;
-let count = 0;
+let offset = 0;
 
 //initial call to get code running
 makeCall();
 
 // ---- Yelp Credentials ----
-//CONSUMER KEY AND CONSUMER SECRET, I placed it in a CONFIG FILE
+// CONSUMER KEY AND CONSUMER SECRET, I placed it in a CONFIG FILE
 function makeCall(){
+	
+	// get the access token 
 	yelp.accessToken(conf.consumer_key, conf.consumer_secret).then(response =>{
+	
+	// do a search with the access token 
 	const client = yelp.client(response.jsonBody.access_token);
-		client.search({ term:'cake', location: 'New York', limit: limit, offset: offset_brah})
+		
+		// search for Cake in New York
+		client.search({ term:'cake', location: 'New York', limit: limit, offset: offset})
 			.then(response => {
+					// get results 
 					response.jsonBody.businesses.forEach(ele => {
+
+						// make sure the data has an address or phone number
 						if(ele.location.address1 && ele.phone){
+
+							// register Bakery account (for authentication)
 							const newBakeryAuth = new Bakery_Auth({
 								username: ele.id,
-								password: bcrypt.hashSync(conf.pass, 10)
+								password: bcrypt.hashSync(conf.pass, 10) //hash/salt password
 							});
 
+							// save data into database
 							newBakeryAuth.save(function(err, bakery){
 								if(err){
 									console.log(err);
 								}
 							});
+
+							// create Bakery object that references the Bakery account
 							const newBakery = new Bakery({
 								bakeryId: newBakeryAuth._id,
 								name: ele.name,
@@ -58,21 +71,23 @@ function makeCall(){
 								phone: ele.phone
 							});
 
-							console.log(ele.name);
+							// save data into database
 							newBakery.save(function(err, bakery) {
 								if (err){
 									console.log(err);
 								}
 							});
-							count++;
 						}
-					
 					});
-					offset_brah += 50;
-					if(offset_brah <= 100){ //Change to 950 for 1000 results
-						makeCall();
+
+					// increase offset by 50 (get the next set of 50 bakeries)
+					offset += 50;
+
+					// MAX RESULT YELP ALLOWS IS 1000, else yelp will send back error
+					if(offset <= 100){ // change to 950 to get about 1000 results
+						makeCall();	// continue polling data 
 					}else{
-						process.exit(); //automatically exit node 
+						process.exit(); // automatically exit node 
 					}
 			});
 	}).catch(e => {
