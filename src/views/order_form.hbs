@@ -229,11 +229,11 @@
 			const postal = componentForm.postal_code;
 			const query = "../findBakery" + "?postal=" + postal;
 
-			// GET XMLHttpRequest that preflights and uses the Riot API Key
+			// GET XMLHttpRequest to the app to retrieve a bakery object
 			const req = new XMLHttpRequest();
 			req.open('GET', query);
 
-			// on load process match information
+			// on load process bakery object
 			req.addEventListener('load', function(){
 				if (req.status >= 200 && req.status <= 400){
 					const bakery = JSON.parse(req.responseText);
