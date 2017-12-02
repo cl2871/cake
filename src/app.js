@@ -92,12 +92,16 @@ app.get('/findBakery', (req, res) => {
 	/* finds the closest bakery and sends back a json
 	*/
 
-	const postal = req.query.postal;
+	const postal = {
+		'zipcode': req.query.postal
+	};
 
-	Bakery.find({zipcode: postal}, function(err, bakeries){
+
+	Bakery.find(postal, function(err, bakeries){
 		if (err){
 			console.log(err);
 		}
+		//console.log(bakeries);
 		if (bakeries[0]){
 			res.json(bakeries[0]);
 		}
