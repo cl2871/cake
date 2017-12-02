@@ -16,7 +16,7 @@
 			</div>
 			<div class="col-md-8 mb-4">
 				<label for="autocomplete">Delivery Address</label>
-				<input id="autocomplete" class="form-control" placeholder="Please enter delivery address" onFocus="geolocate()" type="text"></input>
+				<input id="autocomplete" class="form-control" placeholder="Please enter delivery address" onFocus="geolocate()" type="text">
 			</div>
 			<div class="col-md-2 mb-4">
 			</div>
@@ -30,11 +30,11 @@
 			</div>
 			<div class="col-md-2 mb-1">
 				<label for="street_number">Street #</label>
-				<input class="form-control" id="street_number" disabled="true"></input>
+				<input class="form-control" id="street_number" disabled="true">
 			</div>
 			<div class="col-md-6 mb-1">
 				<label for="route">Route</label>
-				<input class="form-control" id="route" disabled="true"></input>
+				<input class="form-control" id="route" disabled="true">
 			</div>
 			<div class="col-md-2 mb-1">
 			</div>
@@ -53,15 +53,15 @@
 			</div>
 			<div class="col-md-4 mb-1">
 				<label for="locality">City</label>
-				<input class="form-control" id="locality" disabled="true"></input>
+				<input class="form-control" id="locality" disabled="true">
 			</div>
 			<div class="col-md-2 mb-1">
 				<label for="administrative_area_level_1">State</label>
-				<input class="form-control" id="administrative_area_level_1" disabled="true"></input>
+				<input class="form-control" id="administrative_area_level_1" disabled="true">
 			</div>
 			<div class="col-md-2 mb-1">
 				<label for="postal_code">Zip Code</label>
-				<input class="form-control" id="postal_code" disabled="true"></input>
+				<input class="form-control" id="postal_code" disabled="true">
 			</div>
 			<div class="col-md-2 mb-1">
 			</div>
@@ -73,7 +73,7 @@
 			</div>
 			<div class="col-md-4 mb-4">
 				<label for="country">Country</label>
-				<input class="form-control" id="country" disabled="true"></input>
+				<input class="form-control" id="country" disabled="true">
 			</div>
 			<div class="col-md-2 mb-4">
 			</div>
@@ -82,15 +82,43 @@
 		</div>
 	</form>
 
+	<!-- Row: Contact Info -->
+	<div class="row">
+		<div class="col-md-2 mb-4">
+		</div>
+		<div class="col-md-4 mb-4">
+			<label for="email">Email</label>
+			<input class="form-control" id="email" type="email" name="email" placeholder="example@gmail.com" pattern="^([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x22([^\x0d\x22\x5c\x80-\xff]|\x5c[\x00-\x7f])*\x22)(\x2e([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x22([^\x0d\x22\x5c\x80-\xff]|\x5c[\x00-\x7f])*\x22))*\x40([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x5b([^\x0d\x5b-\x5d\x80-\xff]|\x5c[\x00-\x7f])*\x5d)(\x2e([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x5b([^\x0d\x5b-\x5d\x80-\xff]|\x5c[\x00-\x7f])*\x5d))*(\.\w{2,})+$" required>
+		</div>
+		<div class="col-md-4 mb-4">
+			<label for="phone">Phone #</label>
+			<input class="form-control" id="phone" type="tel" name="phone" placeholder="1234567890" pattern="[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]" required>
+		</div>
+		<div class="col-md-2 mb-4">
+		</div>
+	</div>
+
+	<!-- Row: Password -->
+	<div class="row">
+		<div class="col-md-2 mb-4">
+		</div>
+		<div class="col-md-4 mb-4">
+			<label for="password">Password</label>
+			<input class="form-control" id="password" type="password" name="password" placeholder="Password" required>
+		</div>
+		<div class="col-md-4 mb-4">
+		</div>
+	</div>
+
 	<!-- Row: Address Submit Button and Display -->
 	<div class="row">
 		<div class="col-md-2 mb-4">
 			</div>
 		<div class="col-md-2 mb-4">
-			<button type="button" id="yelpButton" class="btn btn-secondary btn-lg" disabled>Yelp Button</button>
+			<button type="button" id="bakeryButton" class="btn btn-secondary btn-lg" disabled>Bakery Button</button>
 		</div>
 		<div class="col-md-2 mb-4">
-			<p id="yelpDisplay"></p>
+			<p id="bakeryDisplay"></p>
 		</div>
 	</div>
 </div>
@@ -117,7 +145,11 @@
 		country: 'long_name',
 		postal_code: 'short_name'
 	};
-	let completeAddress, cakeStore;
+	let completeAddress;
+
+	// bakery html elements 
+	const bakeryDisplay = document.getElementById('bakeryDisplay');
+	const bakeryButton = document.getElementById("bakeryButton")
 
 	function initAutocomplete() {
 		// Create the autocomplete object, restricting the search to geographical
@@ -155,7 +187,7 @@
 				document.getElementById(addressType).value = val;
 				completeAddress += val;
 			}
-			document.getElementById("yelpButton").disabled = false;
+			document.getElementById("bakeryButton").disabled = false;
 		}
 	}
 
@@ -177,48 +209,59 @@
 		}
 	}
 
-	function yelpRequest(){
-		// make a GET Request to the Yelp API and output data
+	function createElementTextNode(type, text){
+		/* creates an element node that has a text node child
+		*/
 
-		// create request headers object
-		const reqHeaders = new Headers();
-		reqHeaders.append("Authorization", "Bearer {{YELP_KEY}}");
-		reqHeaders.append("Access-Control-Allow-Origin", "*");
+		// create the nodes and append the text node to the element node
+		const node = document.createElement(type);
+		const textNode = document.createTextNode(text);
+		node.appendChild(textNode);
 
-		// create init object
-		const init = {
-			method: "GET",
-			headers: reqHeaders,
-			mode: 'cors'
-		};
+		return node;
+	}
 
-		// proxy used for cors preflight
-		const corsProxy = "https://cors-anywhere.herokuapp.com/";
-		const url = "https://api.yelp.com/v3/businesses/search?term=cake&location="+completeAddress+"&limit=5";
+	function bakeryRequest(){
+		// retrieve closest bakery from db
 
-		// make a new Request object and use fetch to grab Yelp JSON data
-		const req = new Request(corsProxy + url, init);
-		fetch(req).then(function(response){
-			if (response.ok){
-				return response.json();
-			}
-			throw new Error('Network response was not ok.');
-		}).then(function(data){
-			cakeStore = data.businesses[0].name;
-			document.getElementById("yelpDisplay").textContent = cakeStore;
-		}).catch(function(error) {
-  			console.log('Problem with fetch operation: ' + error.message);
+		return new Promise(function(fulfill, reject){
+
+			const postal = componentForm.postal_code;
+			const query = "../findBakery" + "?postal=" + postal;
+
+			// GET XMLHttpRequest that preflights and uses the Riot API Key
+			const req = new XMLHttpRequest();
+			req.open('GET', query);
+
+			// on load process match information
+			req.addEventListener('load', function(){
+				if (req.status >= 200 && req.status <= 400){
+					const bakery = JSON.parse(req.responseText);
+					console.log(bakery);
+					fulfill(bakery);
+				}
+				else{
+					reject('bad status code: ' + req.status);
+				}
+			});
+
+			req.send();
 		});
 	}
 
-	function yelpDisplay(){
-		// make a request to the Yelp API and then turn button off
-		yelpRequest();
-		document.getElementById("yelpButton").disabled = true;
+	function bakeryDisplayUpdate(){
+		// retrieve a bakery, display its information, and then turn button off
+		const bakeryPromise = bakeryRequest();
+		bakeryPromise.then((bakery) => {
+			const bakeryNode = createElementTextNode('p', bakery.name + '\n' + bakery.address);
+			bakeryDisplay.append(bakeryNode);
+			//console.log('success');
+		});
+		bakeryButton.disabled = true;
 	}
 
-	// process yelp data when button is clicked
-	yelpButton.addEventListener("click", yelpDisplay);
+	// make a bakery retrieval when button is clicked
+	bakeryButton.addEventListener("click", bakeryDisplayUpdate);
 
 </script>
 <script>

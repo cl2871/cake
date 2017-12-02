@@ -88,6 +88,26 @@ app.get('/bakeries', (req, res) => {
 	});
 });
 
+app.get('/findBakery', (req, res) => {
+	/* finds the closest bakery and sends back a json
+	*/
+
+	const postal = req.query.postal;
+
+	Bakery.find({zipcode: postal}, function(err, bakeries){
+		if (err){
+			console.log(err);
+		}
+		if (bakeries[0]){
+			res.json(bakeries[0]);
+		}
+		else{
+			const error = {error: 'No Bakeries'};
+			res.json(error);
+		}
+	});
+});
+
 // listen
 app.listen(port, function(){
 	console.log('Listening on port ' + port);
