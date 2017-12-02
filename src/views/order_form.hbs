@@ -113,12 +113,16 @@
 	<!-- Row: Address Submit Button and Display -->
 	<div class="row">
 		<div class="col-md-2 mb-4">
-			</div>
+		</div>
 		<div class="col-md-2 mb-4">
 			<button type="button" id="bakeryButton" class="btn btn-secondary btn-lg" disabled>Bakery Button</button>
 		</div>
 		<div class="col-md-2 mb-4">
+		</div>
+		<div class="col-md-4 mb-4">
 			<p id="bakeryDisplay"></p>
+		</div>
+		<div class="col-md-2 mb-4">
 		</div>
 	</div>
 </div>
@@ -126,7 +130,7 @@
 
 <script>
 	/* 	comments and code left in from code sample 
-		
+		our code is built on top of the code sample 
 	*/ 
 
 	// This example displays an address form, using the autocomplete feature
@@ -145,7 +149,10 @@
 		country: 'long_name',
 		postal_code: 'short_name'
 	};
+
+	// completeAddress holds the entire address string, addressObject holds address components
 	let completeAddress;
+	let addressObject;
 
 	// bakery html elements 
 	const bakeryDisplay = document.getElementById('bakeryDisplay');
@@ -166,8 +173,9 @@
 		// Get the place details from the autocomplete object.
 		var place = autocomplete.getPlace();
 
-		// reset completeAddress
+		// reset completeAddress and addressObject
 		completeAddress = "";
+		addressObject = {};
 
 		for (var component in componentForm) {
 			document.getElementById(component).value = '';
@@ -186,6 +194,7 @@
 				var val = place.address_components[i][componentForm[addressType]];
 				document.getElementById(addressType).value = val;
 				completeAddress += val;
+				addressObject[addressType] = val;
 			}
 			document.getElementById("bakeryButton").disabled = false;
 		}
@@ -226,8 +235,9 @@
 
 		return new Promise(function(fulfill, reject){
 
-			const postal = componentForm.postal_code;
+			const postal = addressObject['postal_code'];
 			const query = "../findBakery" + "?postal=" + postal;
+			console.log(query);
 
 			// GET XMLHttpRequest to the app to retrieve a bakery object
 			const req = new XMLHttpRequest();

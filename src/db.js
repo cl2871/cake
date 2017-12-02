@@ -5,8 +5,12 @@
 const path = require("path");
 const fs = require('fs');
 const fn = path.join(__dirname, 'config.json');
-const data = fs.readFileSync(fn);
-const conf = JSON.parse(data);
+
+// if the config file exists, read it in
+if (fs.existsSync(fn)) {
+	const data = fs.readFileSync(fn);
+	const conf = JSON.parse(data);
+}
 
 // require mongoose and connect to cake database
 const MONGO_PW = process.env.MONGO_PW || conf.mongo_pass;
