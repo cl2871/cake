@@ -31,6 +31,10 @@ const User = new mongoose.Schema({
 	phone: {
 		type: String,
 		required: true
+	},
+	role: {
+		type: String,
+		default: 'client'
 	}
 });
 
@@ -79,6 +83,10 @@ const Bakery_Auth = new mongoose.Schema({
 	password: {
 		type: String,
 		required: true
+	},
+	role: {
+		type: String,
+		default: 'baker'
 	}
 });
 

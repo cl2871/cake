@@ -24,6 +24,19 @@ const conf = JSON.parse(data);
 const limit = 50;
 let offset = 0;
 
+//console.log(mongoose.connection.readyState);
+mongoose.connection.on('connected', function(){
+	console.log("Connection open");
+	mongoose.connection.db.listCollections().toArray(function(err, collections) {
+	        if (collections) {
+	            collections.forEach(ele => {
+	            	console.log("Dropping: "+ ele.name);
+	            	mongoose.connection.db.dropCollection(ele.name);
+	            });
+	        }
+	    });
+});
+
 //initial call to get code running
 makeCall();
 
@@ -84,7 +97,7 @@ function makeCall(){
 					offset += 50;
 
 					// MAX RESULT YELP ALLOWS IS 1000, else yelp will send back error
-					if(offset <= 100){ // change to 950 to get about 1000 results
+					if(offset <= 50){ // change to 950 to get about 1000 results
 						makeCall();	// continue polling data 
 					}else{
 						process.exit(); // automatically exit node 
