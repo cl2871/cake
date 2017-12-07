@@ -16,6 +16,7 @@ const ConnectRoles = require('connect-roles');
 const user = new ConnectRoles();
 const bcrypt = require('bcryptjs');
 //const fs = require('fs');
+const flash = require('connect-flash');
 
 // connect to db and utilize mongoose models
 require("./db");
@@ -35,6 +36,7 @@ app.use(session(sessionOptions));
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(user.middleware());
+app.use(flash());
 
 // ---- Passport ----
 passport.serializeUser(function(user, done){
@@ -101,10 +103,11 @@ passport.use('bakery-login', new LocalStrategy(
 
 // ---- User Login ----
 passport.use('user-login', new LocalStrategy({
-		usernameField: 'email'
+		usernameField: 'email',
+		passReqToCallback: true
 	},
-	function(username, password, done){
-		User.findOne({username: username}, function(err, user){
+	function(req, email, password, done){
+		User.findOne({email: email}, function(err, user){
 			if(err){
 				console.log(err);
 				return done(err);
@@ -136,10 +139,9 @@ passport.use('bakery-register', new LocalStrategy({
 					console.log("Username is taken");
 				}
 				else{
-
 					const newBakeryAuth = new Bakery_Auth();
 					newBakeryAuth.username = username;
-					newBakeryAuth.password = bcrypt.hashSync(conf.pass, 10);
+					newBakeryAuth.password = bcrypt.hashSync(password, 10);
 
 					// save data into database
 					newBakeryAuth.save(function(err, bakery){
@@ -164,7 +166,7 @@ passport.use('bakery-register', new LocalStrategy({
 								}
 								else{
 									console.log("Created new bakery user");
-									return done(null, Bakery_Auth);
+									return done(null, newBakeryAuth);
 								}
 							});
 						}
@@ -191,18 +193,17 @@ passport.use('user-register', new LocalStrategy({
 				}
 				else{
 					const newUser = new User();
-					newUser.username = email;
+					newUser.email = email;
 					newUser.password = bcrypt.hashSync(password, 10);
 					newUser.phone = req.body.phone;
 
 					newUser.save(function(err, usr){
 						if(err){
-							console.log("Error");
+							console.log("Error " + err);
 						}
 						console.log("Created new user");
 						return done(null, newUser);
 					});
-
 				}
 			});
 		})
@@ -241,35 +242,92 @@ app.post('/', (req, res) => {
 	res.redirect('/getCake');
 });
 
+// ---- Login for Bakeries ----
+
+app.get('/bakeries/login', (req, res) => {
+	res.render('bakeries_login');
+});
+
+app.post('/bakeries/login', passport.authenticate('bakery-login', {
+	successRedirect: '/bakery/dashboard',
+	failureRedirect: '/bakeries/login',
+	//failureFlash:true
+}));
+
+// ---- Register for Bakeries ----
+
+app.get('/bakeries/register', (req, res) => {
+	res.render('onboarding_form', {PLACES_KEY, YELP_KEY});
+});
+
+app.post('/bakeries/register', passport.authenticate('bakery-register', {
+  successRedirect: '/bakery/dashboard',
+  failureRedirect: '/',
+  failureFlash: true
+}));
+
+// ---- Login for Users ----
+
+app.get('/user/login', (req, res) => {
+	res.render('users_login');
+});
+
+app.post('/user/login', passport.authenticate('user-login', {
+	successRedirect: '/user/dashboard', //TODO: this should be the user's online tracker
+	failureRedirect: '/user/login',
+	failureFlash:true
+}));
+
+// ---- Registration for Users ----
+
+app.get('/user/register', (req, res) => {
+	res.render('user_registration');
+});
+
+app.post('/user/register', passport.authenticate('user-register', {
+	successRedirect: '/', //TODO: this should be the user's online tracker
+	failureRedirect: '/user/register',
+	failureFlash: true
+}));
+
+app.get('/bakery/dashboard', (req, res) => {
+	res.render('bakery_dashboard');
+});
+
+app.get('/user/dashboard', (req, res) => {
+	res.render('user_dashboard');
+});
+
+
 app.get('/getCake', (req, res) => {
 	res.render('order_form', {PLACES_KEY, YELP_KEY});
 });
 
-app.get('/bakeries/new', (req, res) => {
-	res.render('onboarding_form', {PLACES_KEY, YELP_KEY});
-});
+// app.get('/bakeries/new', (req, res) => {
+// 	res.render('onboarding_form', {PLACES_KEY, YELP_KEY});
+// });
 
-app.post('/bakeries', (req, res) => {
-	//console.log(req.body);
-	const deliver = (req.body.deliver === 'true');
+// app.post('/bakeries', (req, res) => {
+// 	//console.log(req.body);
+// 	const deliver = (req.body.deliver === 'true');
 
-	const newBakery = new Bakery({
-		name: req.body.name,
-		address: req.body.address,
-		email: req.body.email,
-		password: req.body.password,
-		phone: req.body.phone,
-		deliver: deliver
-	});
+// 	const newBakery = new Bakery({
+// 		name: req.body.name,
+// 		address: req.body.address,
+// 		email: req.body.email,
+// 		password: req.body.password,
+// 		phone: req.body.phone,
+// 		deliver: deliver
+// 	});
 
-	newBakery.save(function(err, bakery) {
-		if (err){
-			console.log(err);
-		}
-		console.log('added bakery', bakery.name);
-		res.redirect('/bakeries');
-	});
-});
+// 	newBakery.save(function(err, bakery) {
+// 		if (err){
+// 			console.log(err);
+// 		}
+// 		console.log('added bakery', bakery.name);
+// 		res.redirect('/bakeries');
+// 	});
+// });
 
 app.get('/bakeries', (req, res) => {
 	Bakery.find({}, function(err, bakeries){
@@ -277,30 +335,6 @@ app.get('/bakeries', (req, res) => {
 			console.log(err);
 		}
 		res.render('bakeries', {bakeries: bakeries});
-	});
-});
-
-app.get('/findBakery', (req, res) => {
-	/* finds the closest bakery and sends back a json
-	*/
-
-	const postal = {
-		'zipcode': req.query.postal
-	};
-
-
-	Bakery.find(postal, function(err, bakeries){
-		if (err){
-			console.log(err);
-		}
-		//console.log(bakeries);
-		if (bakeries[0]){
-			res.json(bakeries[0]);
-		}
-		else{
-			const error = {error: 'No Bakeries'};
-			res.json(error);
-		}
 	});
 });
 

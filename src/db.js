@@ -5,11 +5,12 @@
 const path = require("path");
 const fs = require('fs');
 const fn = path.join(__dirname, 'config.json');
+let conf = "";
 
 // if the config file exists, read it in
 if (fs.existsSync(fn)) {
 	const data = fs.readFileSync(fn);
-	const conf = JSON.parse(data);
+	conf = JSON.parse(data);
 }
 
 // require mongoose and connect to cake database

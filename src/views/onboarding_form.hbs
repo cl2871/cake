@@ -1,6 +1,6 @@
 
 <div class="container">
-	<form action="/bakeries" method="POST">
+	<form action="/bakeries/register" method="POST">
 
 		<div class="row">
 			<div class="col-md-2 mb-5">
@@ -69,15 +69,15 @@
 			</div>
 			<div class="col-md-4 mb-1">
 				<label for="locality">City</label>
-				<input class="form-control" id="locality" disabled="true">
+				<input class="form-control" id="locality" disabled="true" name="city">
 			</div>
 			<div class="col-md-2 mb-1">
 				<label for="administrative_area_level_1">State</label>
-				<input class="form-control" id="administrative_area_level_1" disabled="true">
+				<input class="form-control" id="administrative_area_level_1" disabled="true" name="state">
 			</div>
 			<div class="col-md-2 mb-1">
 				<label for="postal_code">Zip Code</label>
-				<input class="form-control" id="postal_code" disabled="true">
+				<input class="form-control" id="postal_code" disabled="true" name="zipcode">
 			</div>
 			<div class="col-md-2 mb-1">
 			</div>
@@ -89,7 +89,7 @@
 			</div>
 			<div class="col-md-4 mb-4">
 				<label for="country">Country</label>
-				<input class="form-control" id="country" disabled="true">
+				<input class="form-control" id="country" disabled="true" name="country">
 			</div>
 			<div class="col-md-2 mb-4">
 			</div>
@@ -101,10 +101,12 @@
 		<div class="row">
 			<div class="col-md-2 mb-4">
 			</div>
+			<!--
 			<div class="col-md-4 mb-4">
 				<label for="email">Email</label>
 				<input class="form-control" id="email" type="email" name="email" placeholder="example@gmail.com" pattern="^([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x22([^\x0d\x22\x5c\x80-\xff]|\x5c[\x00-\x7f])*\x22)(\x2e([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x22([^\x0d\x22\x5c\x80-\xff]|\x5c[\x00-\x7f])*\x22))*\x40([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x5b([^\x0d\x5b-\x5d\x80-\xff]|\x5c[\x00-\x7f])*\x5d)(\x2e([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x5b([^\x0d\x5b-\x5d\x80-\xff]|\x5c[\x00-\x7f])*\x5d))*(\.\w{2,})+$" required>
 			</div>
+			--> 
 			<div class="col-md-4 mb-4">
 				<label for="phone">Phone #</label>
 				<input class="form-control" id="phone" type="tel" name="phone" placeholder="1234567890" pattern="[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]" required>
@@ -112,6 +114,19 @@
 			<div class="col-md-2 mb-4">
 			</div>
 		</div>
+
+		<!-- Row: Bakery Username -->
+		<div class="row">
+			<div class="col-md-2 mb-4">
+			</div>
+			<div class="col-md-8 mb-4">
+				<label for="bakery-name">Username</label>
+				<input class="form-control" id="bakery-name" name="username" placeholder="Please enter username" type="text" required>
+			</div>
+			<div class="col-md-2 mb-4">
+			</div>
+		</div>
+
 
 		<!-- Row: Password -->
 		<div class="row">
@@ -126,6 +141,7 @@
 		</div>
 
 		<!-- Row: Deliver -->
+		<!--
 		<div class="row">
 			<div class="col-md-2 mb-4">
 			</div>
@@ -152,6 +168,7 @@
 			<div class="col-md-2 mb-4">
 			</div>
 		</div>
+		--> 
 
 		<!-- Row: Submit Button-->
 		<div class="row">
