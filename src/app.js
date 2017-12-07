@@ -17,6 +17,8 @@ const user = new ConnectRoles();
 const bcrypt = require('bcryptjs');
 //const fs = require('fs');
 const flash = require('connect-flash');
+const server = require('http').Server(app);
+const io = require('socket.io')(server);
 
 // connect to db and utilize mongoose models
 require("./db");
@@ -61,24 +63,30 @@ passport.deserializeUser(function(diff, done){
 });
 
 // ---- Bakery Middleware (Check Permission) ----
-user.use('bakery permission',function(req){
-	console.log("Bakery needs/has permission");
-	console.log(req.user.role);
-	if(req.user.role === 'baker'){
-		console.log("Person is baker");
-		return true;
+function bakeryAuthenticated(req, res, next){
+	/* checks to make sure a user is authenticated
+	*/
+
+	if (req.isAuthenticated() && req.user.role === 'baker'){
+		return next();
 	}
-});
+	else{
+		res.redirect('/bakery/login');
+	}
+}
 
 // ---- User Middleware (Check Permission) ----
-user.use('user permission', function(req){
-	console.log("User needs/has permission");
-	console.log(req.user.role);
-	if(req.user.role === 'client'){
-		console.log("Person is user");
-		return true;
+function clientAuthenticated(req, res, next){
+	/* checks to make sure a user is authenticated
+	*/
+
+	if (req.isAuthenticated() && req.user.role === 'client'){
+		return next();
 	}
-});
+	else{
+		res.redirect('/user/login');
+	}
+}
 
 // ---- Bakery Login ----
 passport.use('bakery-login', new LocalStrategy(
@@ -201,7 +209,7 @@ passport.use('user-register', new LocalStrategy({
 						if(err){
 							console.log("Error " + err);
 						}
-						console.log("Created new user" + user.email);
+						console.log("Created new user " + user.email);
 						return done(null, newUser);
 					});
 				}
@@ -251,7 +259,7 @@ app.get('/bakery/login', (req, res) => {
 app.post('/bakery/login', passport.authenticate('bakery-login', {
 	successRedirect: '/bakery/dashboard',
 	failureRedirect: '/bakery/login',
-	//failureFlash:true
+	failureFlash:true
 }));
 
 // ---- Register for Bakeries ----
@@ -262,7 +270,7 @@ app.get('/bakery/register', (req, res) => {
 
 app.post('/bakery/register', passport.authenticate('bakery-register', {
   successRedirect: '/bakery/dashboard',
-  failureRedirect: '/',
+  failureRedirect: '/bakery/register',
   failureFlash: true
 }));
 
@@ -290,16 +298,22 @@ app.post('/user/register', passport.authenticate('user-register', {
 	failureFlash: true
 }));
 
-app.get('/bakery/dashboard', (req, res) => {
+// ---- Dashboard Routes ----
+
+app.get('/bakery/dashboard', bakeryAuthenticated, (req, res) => {
 	res.render('bakery_dashboard');
 });
 
-app.get('/user/dashboard', (req, res) => {
+app.get('/user/dashboard', clientAuthenticated, (req, res) => {
 	res.render('user_dashboard');
 });
 
+app.get('/logout', function(req, res){
+	req.logout();
+	res.redirect('/');
+});
 
-app.get('/getCake', (req, res) => {
+app.get('/getCake', clientAuthenticated, (req, res) => {
 	res.render('order_form', {PLACES_KEY, YELP_KEY});
 });
 
@@ -330,7 +344,7 @@ app.get('/getCake', (req, res) => {
 // });
 
 app.get('/bakery/list', (req, res) => {
-	Bakery.find({}, function(err, bakeries){
+	Bakery.find({}).populate('bakeryId').exec(function(err, bakeries){
 		if (err){
 			console.log(err);
 		}
