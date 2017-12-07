@@ -34,11 +34,10 @@ mongoose.connection.on('connected', function(){
 	            	mongoose.connection.db.dropCollection(ele.name);
 	            });
 	        }
+	        //initial call to get code running
+			makeCall();
 	    });
 });
-
-//initial call to get code running
-makeCall();
 
 // ---- Yelp Credentials ----
 // CONSUMER KEY AND CONSUMER SECRET, I placed it in a CONFIG FILE
