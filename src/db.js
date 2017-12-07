@@ -76,7 +76,7 @@ const Bakery = new mongoose.Schema({
 });
 
 // Bakery Auth Schema
-const Bakery_Auth = new mongoose.Schema({
+const BakeryAuth = new mongoose.Schema({
 	username: {
 		type: String,
 		required: true
@@ -111,5 +111,5 @@ const Order = new mongoose.Schema({
 // models
 mongoose.model('User', User);
 mongoose.model('Bakery', Bakery);
-mongoose.model('Bakery_Auth', Bakery_Auth);
+mongoose.model('BakeryAuth', BakeryAuth);
 mongoose.model('Order', Order);

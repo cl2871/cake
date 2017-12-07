@@ -22,7 +22,7 @@ const flash = require('connect-flash');
 require("./db");
 const User = mongoose.model('User');
 const Bakery = mongoose.model('Bakery');
-const Bakery_Auth = mongoose.model('Bakery_Auth');
+const BakeryAuth = mongoose.model('BakeryAuth');
 const Order = mongoose.model('Order');
 
 // ---- Session Options ----
@@ -50,7 +50,7 @@ passport.serializeUser(function(user, done){
 passport.deserializeUser(function(diff, done){
 	let ModelType = null;
 	if(diff.type === 'baker'){
-		ModelType = Bakery_Auth;
+		ModelType = BakeryAuth;
 	}
 	else{
 		ModelType = User;
@@ -83,7 +83,7 @@ user.use('user permission', function(req){
 // ---- Bakery Login ----
 passport.use('bakery-login', new LocalStrategy(
 	function(username, password, done){
-		Bakery_Auth.findOne({username: username}, function(err, user){
+		BakeryAuth.findOne({username: username}, function(err, user){
 			if(err){
 				console.log(err);
 				return done(err);
@@ -131,7 +131,7 @@ passport.use('bakery-register', new LocalStrategy({
 	},
 	function(req, username, password, done){
 		process.nextTick(function(){
-			Bakery_Auth.findOne({username: username}, function(err, user){
+			BakeryAuth.findOne({username: username}, function(err, user){
 				if(err){
 					console.log(err);
 				}
@@ -139,7 +139,7 @@ passport.use('bakery-register', new LocalStrategy({
 					console.log("Username is taken");
 				}
 				else{
-					const newBakeryAuth = new Bakery_Auth();
+					const newBakeryAuth = new BakeryAuth();
 					newBakeryAuth.username = username;
 					newBakeryAuth.password = bcrypt.hashSync(password, 10);
 

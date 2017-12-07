@@ -12,7 +12,7 @@ const bcrypt = require('bcryptjs');
 // connect to db and utilize mongoose models
 require("./db");
 const Bakery = mongoose.model('Bakery');
-const Bakery_Auth = mongoose.model('Bakery_Auth');
+const BakeryAuth = mongoose.model('BakeryAuth');
 
 // read from config file 
 const fn = path.join(__dirname, 'config.json');
@@ -23,21 +23,6 @@ const conf = JSON.parse(data);
 
 const limit = 50;
 let offset = 0;
-
-//console.log(mongoose.connection.readyState);
-mongoose.connection.on('connected', function(){
-	console.log("Connection open");
-	mongoose.connection.db.listCollections().toArray(function(err, collections) {
-	        if (collections) {
-	            collections.forEach(ele => {
-	            	console.log("Dropping: "+ ele.name);
-	            	mongoose.connection.db.dropCollection(ele.name);
-	            });
-	        }
-	        //initial call to get code running
-			makeCall();
-	    });
-});
 
 // ---- Yelp Credentials ----
 // CONSUMER KEY AND CONSUMER SECRET, I placed it in a CONFIG FILE
@@ -59,7 +44,7 @@ function makeCall(){
 						if(ele.location.address1 && ele.phone){
 
 							// register Bakery account (for authentication)
-							const newBakeryAuth = new Bakery_Auth({
+							const newBakeryAuth = new BakeryAuth({
 								username: ele.id,
 								password: bcrypt.hashSync(conf.pass, 10) //hash/salt password
 							});
@@ -106,3 +91,18 @@ function makeCall(){
 			console.log(e);		
 	});
 }
+
+//console.log(mongoose.connection.readyState);
+mongoose.connection.on('connected', function(){
+	console.log("Connection open");
+	mongoose.connection.db.listCollections().toArray(function(err, collections) {
+			if (collections) {
+				collections.forEach(ele => {
+					console.log("Dropping: "+ ele.name);
+					mongoose.connection.db.dropCollection(ele.name);
+				});
+			}
+			//initial call to get code running
+			makeCall();
+		});
+});
