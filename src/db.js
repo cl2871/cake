@@ -14,7 +14,7 @@ if (fs.existsSync(fn)) {
 }
 
 // require mongoose and connect to cake database
-const MONGO_PW = process.env.MONGO_PW || conf.mongo_pass;
+const MONGO_PW = conf.mongo_pass || process.env.MONGO_PW;
 const mongoose = require('mongoose');
 mongoose.connect('mongodb://chrisDaddy:' + MONGO_PW + '@cake-shard-00-00-zpoh0.mongodb.net:27017,cake-shard-00-01-zpoh0.mongodb.net:27017,cake-shard-00-02-zpoh0.mongodb.net:27017/test?ssl=true&replicaSet=Cake-shard-0&authSource=admin');
 //mongoose.connect('mongodb://localhost/cake');
