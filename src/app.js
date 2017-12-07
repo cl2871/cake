@@ -11,7 +11,7 @@ const bodyParser = require("body-parser");
 const mongoose = require('mongoose');
 const session = require('express-session');
 const passport = require('passport'), 
-	LocalStrategy = require('passport-local').Strategy
+	LocalStrategy = require('passport-local').Strategy;
 const ConnectRoles = require('connect-roles');
 const user = new ConnectRoles();
 const bcrypt = require('bcryptjs');
@@ -43,20 +43,20 @@ passport.serializeUser(function(user, done){
 	const diff = {
 		id: user.id,
 		type: user.role
-	}
+	};
 	done(null, diff);
 });
 
 passport.deserializeUser(function(diff, done){
 	let ModelType = null;
-	if(diff.type == 'baker'){
+	if(diff.type === 'baker'){
 		ModelType = Bakery_Auth;
 	}
 	else{
 		ModelType = User;
 	}
 	ModelType.findById(diff.id, function(err, user){
-	 	done(err, user);
+		done(err, user);
 	});
 });
 
@@ -64,7 +64,7 @@ passport.deserializeUser(function(diff, done){
 user.use('bakery permission',function(req){
 	console.log("Bakery needs/has permission");
 	console.log(req.user.role);
-	if(req.user.role == 'baker'){
+	if(req.user.role === 'baker'){
 		console.log("Person is baker");
 		return true;
 	}
@@ -74,7 +74,7 @@ user.use('bakery permission',function(req){
 user.use('user permission', function(req){
 	console.log("User needs/has permission");
 	console.log(req.user.role);
-	if(req.user.role == 'client'){
+	if(req.user.role === 'client'){
 		console.log("Person is user");
 		return true;
 	}
@@ -144,7 +144,7 @@ passport.use('bakery-register', new LocalStrategy({
 					newBakeryAuth.password = bcrypt.hashSync(password, 10);
 
 					// save data into database
-					newBakeryAuth.save(function(err, bakery){
+					newBakeryAuth.save(function(err, bakeryAuth){
 						if(err){
 							console.log(err);
 						}
@@ -165,7 +165,7 @@ passport.use('bakery-register', new LocalStrategy({
 									console.log(err);
 								}
 								else{
-									console.log("Created new bakery user");
+									console.log("Created new bakery user " + bakeryAuth.username + " for bakery " + bakery.name);
 									return done(null, newBakeryAuth);
 								}
 							});
@@ -173,7 +173,7 @@ passport.use('bakery-register', new LocalStrategy({
 					});
 				}
 			});
-		})
+		});
 	}
 )); 
 
@@ -197,16 +197,16 @@ passport.use('user-register', new LocalStrategy({
 					newUser.password = bcrypt.hashSync(password, 10);
 					newUser.phone = req.body.phone;
 
-					newUser.save(function(err, usr){
+					newUser.save(function(err, user){
 						if(err){
 							console.log("Error " + err);
 						}
-						console.log("Created new user");
+						console.log("Created new user" + user.email);
 						return done(null, newUser);
 					});
 				}
 			});
-		})
+		});
 	}
 )); 
 
@@ -244,23 +244,23 @@ app.post('/', (req, res) => {
 
 // ---- Login for Bakeries ----
 
-app.get('/bakeries/login', (req, res) => {
-	res.render('bakeries_login');
+app.get('/bakery/login', (req, res) => {
+	res.render('bakery_login');
 });
 
-app.post('/bakeries/login', passport.authenticate('bakery-login', {
+app.post('/bakery/login', passport.authenticate('bakery-login', {
 	successRedirect: '/bakery/dashboard',
-	failureRedirect: '/bakeries/login',
+	failureRedirect: '/bakery/login',
 	//failureFlash:true
 }));
 
 // ---- Register for Bakeries ----
 
-app.get('/bakeries/register', (req, res) => {
-	res.render('onboarding_form', {PLACES_KEY, YELP_KEY});
+app.get('/bakery/register', (req, res) => {
+	res.render('bakery_register', {PLACES_KEY, YELP_KEY});
 });
 
-app.post('/bakeries/register', passport.authenticate('bakery-register', {
+app.post('/bakery/register', passport.authenticate('bakery-register', {
   successRedirect: '/bakery/dashboard',
   failureRedirect: '/',
   failureFlash: true
@@ -269,7 +269,7 @@ app.post('/bakeries/register', passport.authenticate('bakery-register', {
 // ---- Login for Users ----
 
 app.get('/user/login', (req, res) => {
-	res.render('users_login');
+	res.render('user_login');
 });
 
 app.post('/user/login', passport.authenticate('user-login', {
@@ -329,7 +329,7 @@ app.get('/getCake', (req, res) => {
 // 	});
 // });
 
-app.get('/bakeries', (req, res) => {
+app.get('/bakery/list', (req, res) => {
 	Bakery.find({}, function(err, bakeries){
 		if (err){
 			console.log(err);
