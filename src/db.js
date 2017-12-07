@@ -43,7 +43,7 @@ const User = new mongoose.Schema({
 const Bakery = new mongoose.Schema({
 	bakeryId: {
 		type:mongoose.Schema.Types.ObjectId, 
-		ref: 'Bakery_Auth'
+		ref: 'BakeryAuth'
 	},
 	name: {
 		type: String,
