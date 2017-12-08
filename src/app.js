@@ -17,38 +17,44 @@ const user = new ConnectRoles();
 const bcrypt = require('bcryptjs');
 //const fs = require('fs');
 const flash = require('connect-flash');
-const server = require('http').Server(app);
-const io = require('socket.io')(server);
-app.io = io;
 const RedisStore = require('connect-redis')(session);
 
-// connect to db and utilize mongoose models
+// ---- MongoDB Setup ----
+
 require("./db");
 const User = mongoose.model('User');
 const Bakery = mongoose.model('Bakery');
 const BakeryAuth = mongoose.model('BakeryAuth');
 const Order = mongoose.model('Order');
 
-// ---- Session Middleware ----
+// ---- Session Middleware Setup ----
+
 const sessionOptions = {
 	secret: 'secret',
 	saveUninitialized: false, 
 	resave: false 
 };
-
 const sessionMiddleware = session(sessionOptions);
-io.use(function(socket, next){
-	sessionMiddleware(socket.request, socket.request.res, next);
-});
+
+// ---- App Session and Authentication Middlewares ----
+
 app.use(sessionMiddleware);
-
-
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(user.middleware());
 app.use(flash());
 
+// ---- Socket.io Setup ----
+
+const server = require('http').Server(app);
+const io = require('socket.io')(server);
+io.use(function(socket, next){
+	sessionMiddleware(socket.request, socket.request.res, next);
+});
+app.io = io;
+
 // ---- Passport ----
+
 passport.serializeUser(function(user, done){
 	const diff = {
 		id: user.id,
@@ -70,7 +76,8 @@ passport.deserializeUser(function(diff, done){
 	});
 });
 
-// ---- Bakery Middleware (Check Permission) ----
+// ---- Bakery Authentication Middleware ----
+
 function bakeryAuthenticated(req, res, next){
 	/* checks to make sure a user is authenticated
 	*/
@@ -83,7 +90,8 @@ function bakeryAuthenticated(req, res, next){
 	}
 }
 
-// ---- User Middleware (Check Permission) ----
+// ---- User (Client) Authentication Middleware ----
+
 function clientAuthenticated(req, res, next){
 	/* checks to make sure a user is authenticated
 	*/
@@ -97,6 +105,7 @@ function clientAuthenticated(req, res, next){
 }
 
 // ---- Bakery Login ----
+
 passport.use('bakery-login', new LocalStrategy(
 	function(username, password, done){
 		BakeryAuth.findOne({username: username}, function(err, user){
@@ -118,6 +127,7 @@ passport.use('bakery-login', new LocalStrategy(
 );
 
 // ---- User Login ----
+
 passport.use('user-login', new LocalStrategy({
 		usernameField: 'email',
 		passReqToCallback: true
@@ -142,6 +152,7 @@ passport.use('user-login', new LocalStrategy({
 );
 
 // ---- Bakery Registration ----
+
 passport.use('bakery-register', new LocalStrategy({
 		passReqToCallback: true
 	},
@@ -194,6 +205,7 @@ passport.use('bakery-register', new LocalStrategy({
 )); 
 
 // ---- User Registration ----
+
 passport.use('user-register', new LocalStrategy({
 		usernameField: 'email',
 		passReqToCallback: true
@@ -310,9 +322,11 @@ app.post('/user/register', passport.authenticate('user-register', {
 // ---- Dashboard Routes ----
 
 app.get('/bakery/dashboard', bakeryAuthenticated, (req, res) => {
-	// add bakery user session id to data store as key with an object
+	/* bakery dashboard, will establish a socket connection for bakery
+	*/
+
 	console.log('Session Id', req.session.id, 'Bakery Id', req.user.id);
-	res.render('bakery_dashboard', {userId: req.user.id});
+	res.render('bakery_dashboard', {});
 });
 
 app.get('/user/dashboard', clientAuthenticated, (req, res) => {
@@ -329,68 +343,46 @@ app.get('/getCake', clientAuthenticated, (req, res) => {
 });
 
 app.post('/order/new', (req, res) =>{
+	/* will create a new order and save it in MongoDB and send a socket message to a bakery listening
+		if no bakery is active, it will send a response back
+	*/
 
 	let bakeryId = "";
 	let bakerySessionId = "";
 
 	// check for active bakeries
-	if (fakeStore){
-		const active = Object.keys(fakeStore);
+	const active = Object.keys(fakeStore);
+	if (active.length){
+
 		bakerySessionId = active[0];
 		bakeryId = fakeStore[bakerySessionId]['bakeryId'];
+
+		//console.log("CHECKPOINT bakeryId", bakeryId, "bakerySessionId", bakerySessionId);
+
+		// make new order based on Order model
+		const newOrder = new Order({
+			address: req.body.address,
+			bakery: bakeryId,
+			user: req.user.id
+		});
+
+		// save order and then redirect
+		newOrder.save(function(err, order) {
+			if(err){
+				console.log(err);
+			}
+			else{
+				console.log('added order', order.id);
+			}
+			fakeStore[bakerySessionId]['orders'].push(order);
+			app.io.to(fakeStore[bakerySessionId]['socketId']).emit('deliver order', fakeStore[bakerySessionId]['orders']);
+			res.send('success');
+		});
 	}
 	else{
 		res.send('no active bakery');
 	}
-
-	console.log("CHECKPOINT bakeryId", bakeryId);
-
-	// make new order based on Order model
-	const newOrder = new Order({
-		address: req.body.address,
-		bakery: bakeryId,
-		user: req.user.id
-	});
-
-	// save order and then redirect
-	newOrder.save(function(err, order) {
-		if(err){
-			console.log(err);
-		}
-		else{
-			console.log('added order', order.id);
-		}
-		fakeStore[bakerySessionId]['orders'].push(order);
-		app.io.to(fakeStore[bakerySessionId]['socketId']).emit('deliver order', fakeStore[bakerySessionId]['orders']);
-		res.send('success');
-	});
 });
-
-// app.get('/bakeries/new', (req, res) => {
-// 	res.render('onboarding_form', {PLACES_KEY, YELP_KEY});
-// });
-
-// app.post('/bakeries', (req, res) => {
-// 	//console.log(req.body);
-// 	const deliver = (req.body.deliver === 'true');
-
-// 	const newBakery = new Bakery({
-// 		name: req.body.name,
-// 		address: req.body.address,
-// 		email: req.body.email,
-// 		password: req.body.password,
-// 		phone: req.body.phone,
-// 		deliver: deliver
-// 	});
-
-// 	newBakery.save(function(err, bakery) {
-// 		if (err){
-// 			console.log(err);
-// 		}
-// 		console.log('added bakery', bakery.name);
-// 		res.redirect('/bakeries');
-// 	});
-// });
 
 app.get('/bakery/list', (req, res) => {
 	Bakery.find({}).populate('bakeryId').exec(function(err, bakeries){
@@ -401,27 +393,36 @@ app.get('/bakery/list', (req, res) => {
 	});
 });
 
+// ---- Socket.io ----
+
 io.on('connect', socket =>{
 
-	const sessionId = socket.request.session.id;
+	const session = socket.request.session;
 
-	console.log('connected', socket.id, 'with session', sessionId);
+	// prevent app from crashing in case a user is stuck polling on dashboard
+	if (!session.passport){
+		socket.disconnect();
+	}
+	else{
+		const user = session.passport.user;
 
-	socket.on('start', function(data){
-		fakeStore[sessionId] = {};
-		fakeStore[sessionId]['bakeryId'] = data.userId;
-		fakeStore[sessionId]['socketId'] = socket.id;
-		fakeStore[sessionId]['orders'] = [];
+		console.log('connected', socket.id, 'with session', session.id);
 
-		io.to(socket.id).emit('deliver order', fakeStore[sessionId]['orders']);
-	});
+		// fill fakeStore with bakery info
+		socket.on('start', function(data){
+			fakeStore[session.id] = {};
+			fakeStore[session.id]['bakeryId'] = user.id;
+			fakeStore[session.id]['socketId'] = socket.id;
+			fakeStore[session.id]['orders'] = [];
 
+			io.to(socket.id).emit('deliver order', fakeStore[session.id]['orders']);
+		});
+	}
 
 	socket.on('disconnect', function(){
 		console.log('baker disconnected', socket.id, 'with session', socket.request.session.id);
-		delete fakeStore[sessionId];
+		delete fakeStore[session.id];
 	});
-
 });
 
 // listen

@@ -1,5 +1,4 @@
 const socket = io();
-const userId = document.getElementById('orders_listener').getAttribute('userId');
 const ordersDisplay = document.getElementById('ordersDisplay');
 
 
@@ -32,8 +31,7 @@ function updateOrdersDisplay(ordersQueue){
 
 function main(){
 
-
-	socket.emit('start', {userId: userId});
+	socket.emit('start', {message: 'Connected'});
 
 	socket.on('deliver order', (ordersQueue) =>{
 		updateOrdersDisplay(ordersQueue);
