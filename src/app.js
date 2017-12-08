@@ -19,6 +19,8 @@ const bcrypt = require('bcryptjs');
 const flash = require('connect-flash');
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
+app.io = io;
+const RedisStore = require('connect-redis')(session);
 
 // connect to db and utilize mongoose models
 require("./db");
@@ -27,14 +29,20 @@ const Bakery = mongoose.model('Bakery');
 const BakeryAuth = mongoose.model('BakeryAuth');
 const Order = mongoose.model('Order');
 
-// ---- Session Options ----
+// ---- Session Middleware ----
 const sessionOptions = {
 	secret: 'secret',
 	saveUninitialized: false, 
 	resave: false 
 };
 
-app.use(session(sessionOptions));
+const sessionMiddleware = session(sessionOptions);
+io.use(function(socket, next){
+	sessionMiddleware(socket.request, socket.request.res, next);
+});
+app.use(sessionMiddleware);
+
+
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(user.middleware());
@@ -224,6 +232,7 @@ passport.use('user-register', new LocalStrategy({
 const port = process.env.port || 8081;
 const PLACES_KEY = process.env.PLACES_KEY;
 const YELP_KEY = process.env.YELP_KEY;
+const fakeStore = {};
 
 // ---- Setup ----
 
@@ -301,7 +310,9 @@ app.post('/user/register', passport.authenticate('user-register', {
 // ---- Dashboard Routes ----
 
 app.get('/bakery/dashboard', bakeryAuthenticated, (req, res) => {
-	res.render('bakery_dashboard');
+	// add bakery user session id to data store as key with an object
+	console.log('Session Id', req.session.id, 'Bakery Id', req.user.id);
+	res.render('bakery_dashboard', {userId: req.user.id});
 });
 
 app.get('/user/dashboard', clientAuthenticated, (req, res) => {
@@ -315,6 +326,44 @@ app.get('/logout', function(req, res){
 
 app.get('/getCake', clientAuthenticated, (req, res) => {
 	res.render('order_form', {PLACES_KEY, YELP_KEY});
+});
+
+app.post('/order/new', (req, res) =>{
+
+	let bakeryId = "";
+	let bakerySessionId = "";
+
+	// check for active bakeries
+	if (fakeStore){
+		const active = Object.keys(fakeStore);
+		bakerySessionId = active[0];
+		bakeryId = fakeStore[bakerySessionId]['bakeryId'];
+	}
+	else{
+		res.send('no active bakery');
+	}
+
+	console.log("CHECKPOINT bakeryId", bakeryId);
+
+	// make new order based on Order model
+	const newOrder = new Order({
+		address: req.body.address,
+		bakery: bakeryId,
+		user: req.user.id
+	});
+
+	// save order and then redirect
+	newOrder.save(function(err, order) {
+		if(err){
+			console.log(err);
+		}
+		else{
+			console.log('added order', order.id);
+		}
+		fakeStore[bakerySessionId]['orders'].push(order);
+		app.io.to(fakeStore[bakerySessionId]['socketId']).emit('deliver order', fakeStore[bakerySessionId]['orders']);
+		res.send('success');
+	});
 });
 
 // app.get('/bakeries/new', (req, res) => {
@@ -352,7 +401,30 @@ app.get('/bakery/list', (req, res) => {
 	});
 });
 
+io.on('connect', socket =>{
+
+	const sessionId = socket.request.session.id;
+
+	console.log('connected', socket.id, 'with session', sessionId);
+
+	socket.on('start', function(data){
+		fakeStore[sessionId] = {};
+		fakeStore[sessionId]['bakeryId'] = data.userId;
+		fakeStore[sessionId]['socketId'] = socket.id;
+		fakeStore[sessionId]['orders'] = [];
+
+		io.to(socket.id).emit('deliver order', fakeStore[sessionId]['orders']);
+	});
+
+
+	socket.on('disconnect', function(){
+		console.log('baker disconnected', socket.id, 'with session', socket.request.session.id);
+		delete fakeStore[sessionId];
+	});
+
+});
+
 // listen
-app.listen(port, function(){
+server.listen(port, function(){
 	console.log('Listening on port ' + port);
 });

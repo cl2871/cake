@@ -3,12 +3,14 @@
 	<tr>
 		<th>Username</th>
 		<th>Name</th>
+		<th>Auth Id</th>
 		<th>Address</th>
 	</tr>
 	{{#each bakeries as |bakery|}}
 	<tr>
 		<td>{{bakery.bakeryId.username}}</td>
 		<td>{{bakery.name}}</td>
+		<td>{{bakery.bakeryId.id}}</td>
 		<td>{{bakery.address}}</td>
 	</tr>
 	{{/each}}
