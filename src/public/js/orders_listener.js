@@ -14,9 +14,11 @@ function createElementTextNode(type, text){
 	return node;
 }
 
-function updateOrdersDisplay(ordersQueue){
+function updateOrdersDisplay(orders){
 	/* creates an element node that has a text node child
 	*/
+
+	const ordersQueue = orders.split(',');
 
 	// clear out the display
 	while (ordersDisplay.hasChildNodes()) {
@@ -24,7 +26,7 @@ function updateOrdersDisplay(ordersQueue){
 	}
 
 	ordersQueue.forEach((order) =>{
-		const node = createElementTextNode('p', order.address);
+		const node = createElementTextNode('p', order);
 		ordersDisplay.append(node);
 	});
 }
@@ -33,8 +35,8 @@ function main(){
 
 	socket.emit('start', {message: 'Connected'});
 
-	socket.on('deliver order', (ordersQueue) =>{
-		updateOrdersDisplay(ordersQueue);
+	socket.on('deliver order', (orders) =>{
+		updateOrdersDisplay(orders);
 	});
 }
 

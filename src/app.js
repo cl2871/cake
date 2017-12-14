@@ -17,7 +17,6 @@ const user = new ConnectRoles();
 const bcrypt = require('bcryptjs');
 //const fs = require('fs');
 const flash = require('connect-flash');
-const RedisStore = require('connect-redis')(session);
 
 // ---- MongoDB Setup ----
 
@@ -27,10 +26,19 @@ const Bakery = mongoose.model('Bakery');
 const BakeryAuth = mongoose.model('BakeryAuth');
 const Order = mongoose.model('Order');
 
+// ---- Redis Setup ----
+
+const redis = require('socket.io-redis');
+const redisStore = require('connect-redis')(session);
+const client = redis.createClient();
+const ttl = 1000; // time to live in seconds for a key
+clientBakery = redis.createClient();
+
 // ---- Session Middleware Setup ----
 
 const sessionOptions = {
 	secret: 'secret',
+	store: new redisStore({host: 'localhost', port: 6379, client: client, ttl: ttl}),
 	saveUninitialized: false, 
 	resave: false 
 };
@@ -51,6 +59,8 @@ const io = require('socket.io')(server);
 io.use(function(socket, next){
 	sessionMiddleware(socket.request, socket.request.res, next);
 });
+// adapter allows multiple socket.io nodes to broadcast + emit to each other
+io.adapter(redis({ host: 'localhost', port: 6379 }));
 app.io = io;
 
 // ---- Passport ----
@@ -244,7 +254,6 @@ passport.use('user-register', new LocalStrategy({
 const port = process.env.port || 8081;
 const PLACES_KEY = process.env.PLACES_KEY;
 const YELP_KEY = process.env.YELP_KEY;
-const fakeStore = {};
 
 // ---- Setup ----
 
@@ -351,11 +360,12 @@ app.post('/order/new', (req, res) =>{
 	let bakerySessionId = "";
 
 	// check for active bakeries
-	const active = Object.keys(fakeStore);
+	const active = clientBakery.keys('*');
+	console.log(active);
 	if (active.length){
 
 		bakerySessionId = active[0];
-		bakeryId = fakeStore[bakerySessionId]['bakeryId'];
+		bakeryId = clientBakery.hget(bakerySessionId, 'bakeryId');
 
 		//console.log("CHECKPOINT bakeryId", bakeryId, "bakerySessionId", bakerySessionId);
 
@@ -374,8 +384,14 @@ app.post('/order/new', (req, res) =>{
 			else{
 				console.log('added order', order.id);
 			}
-			fakeStore[bakerySessionId]['orders'].push(order);
-			app.io.to(fakeStore[bakerySessionId]['socketId']).emit('deliver order', fakeStore[bakerySessionId]['orders']);
+			const orders = clientBakery.hget(bakerySessionId, 'orders');
+			if (!orders){
+				clientBakery.hset(bakerySessionId, 'orders', order.address);
+			}
+			else{
+				clientBakery.hset(bakerySessionId, 'orders', orders + ',' + order.address);
+			}
+			app.io.to(clientBakery.hget(bakerySessionId, 'socketId')).emit('deliver order', clientBakery.hget(bakerySessionId, 'orders'));
 			res.send('success');
 		});
 	}
@@ -408,20 +424,18 @@ io.on('connect', socket =>{
 
 		console.log('connected', socket.id, 'with session', session.id);
 
-		// fill fakeStore with bakery info
+		// add a bakery info (as hash set) with key session.id to the Redis client
 		socket.on('start', function(data){
-			fakeStore[session.id] = {};
-			fakeStore[session.id]['bakeryId'] = user.id;
-			fakeStore[session.id]['socketId'] = socket.id;
-			fakeStore[session.id]['orders'] = [];
+			clientBakery.hmset(session.id, 'bakeryId', user.id, 'socketId', socket.id);
+			clientBakery.hset(session.id, 'orders', '');
 
-			io.to(socket.id).emit('deliver order', fakeStore[session.id]['orders']);
+			io.to(socket.id).emit('deliver order', clientBakery.hget(session.id, 'orders'));
 		});
 	}
 
 	socket.on('disconnect', function(){
 		console.log('baker disconnected', socket.id, 'with session', socket.request.session.id);
-		delete fakeStore[session.id];
+		clientBakery.del(session.id);
 	});
 });
 
