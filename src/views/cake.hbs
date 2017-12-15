@@ -13,9 +13,84 @@
      				<img src="img/cake_sample.jpeg" class="img-fluid rounded" max-width="100%" />
 				</button>
 			</form>
+			<br>
+			<button class="btn btn-outline-light" id="loginBtn">Log in</button>
+			<br>
+			<button class="btn btn-outline-light" id="registerBtn">Register</button>
 		</div>
 		
 		<div class="col">
 		</div>
 	</div>
 </div>
+
+<script>
+	document.addEventListener('DOMContentLoaded', main());
+
+	function main(){
+		const loginBtn = document.getElementById('loginBtn');
+		const registerBtn = document.getElementById('registerBtn');
+		const nextEle = registerBtn.nextSibling;
+
+		loginBtn.style.width = "100%";
+		registerBtn.style.width = "100%";
+		registerBtn.style.marginTop = "15px";
+
+		const caption = document.createElement('p');
+		caption.textContent = "Are you a: ";
+
+		const userForm = document.createElement('form');
+		userForm.setAttribute('method', 'POST');
+
+		const userBtn = document.createElement('input');
+		userBtn.setAttribute('type', 'submit');
+		userBtn.setAttribute('value', 'User');
+		userBtn.setAttribute('class', "btn btn-outline-light");
+		userForm.appendChild(userBtn);
+
+		const bakeryForm = document.createElement('form');
+		bakeryForm.setAttribute('method', 'POST');
+
+		const bakeryBtn = document.createElement('input');
+		bakeryBtn.setAttribute('type', 'submit');
+		bakeryBtn.setAttribute('value', 'Bakery');
+		bakeryBtn.setAttribute('class', "btn btn-outline-light");
+		bakeryForm.appendChild(bakeryBtn);
+
+		caption.style.margin = "5px 0px 5px 0px";
+		bakeryForm.style.margin = "5px 0px 5px 0px";
+		userForm.style.margin = "5px 0px 10px 0px";
+		userBtn.style.width = "100%";
+		bakeryBtn.style.width = "100%";
+
+		loginBtn.addEventListener('click', function(evt){
+			while(loginBtn.nextSibling != registerBtn){
+				loginBtn.parentNode.removeChild(loginBtn.nextSibling);
+			}
+			while(registerBtn.nextSibling != nextEle){
+				registerBtn.parentNode.removeChild(registerBtn.nextSibling);
+			}
+			bakeryForm.setAttribute('action', '/bakery/login');
+			userForm.setAttribute('action', '/user/login');
+
+			loginBtn.parentNode.insertBefore(caption, loginBtn.nextSibling);
+			loginBtn.parentNode.insertBefore(bakeryForm, caption.nextSibling);
+			loginBtn.parentNode.insertBefore(userForm, bakeryForm.nextSibling);
+		});
+
+		registerBtn.addEventListener('click', function(evt){
+			while(loginBtn.nextSibling != registerBtn){
+				loginBtn.parentNode.removeChild(loginBtn.nextSibling);
+			}
+			while(registerBtn.nextSibling != nextEle){
+				registerBtn.parentNode.removeChild(registerBtn.nextSibling);
+			}
+			bakeryForm.setAttribute('action', '/bakery/register');
+			userForm.setAttribute('action', '/user/register');
+
+			registerBtn.parentNode.insertBefore(caption, registerBtn.nextSibling);
+			registerBtn.parentNode.insertBefore(bakeryForm, caption.nextSibling);
+			registerBtn.parentNode.insertBefore(userForm, bakeryForm.nextSibling);
+		});
+	}
+</script>
