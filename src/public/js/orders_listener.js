@@ -28,7 +28,7 @@ function updateOrdersDisplay(order){
 	*/
 
 	const div = document.createElement('div');
-	div.setAttribute('id', order._id);
+	div.setAttribute('id', order.id);
 	const address = order.address;
 	const node = createElementTextNode('p', address);
 
@@ -96,10 +96,13 @@ function updateOrdersDisplay(order){
 
 		progBar.style.width = width + 25 + '%';
 
-		socket.emit('update order', (data) =>{
-			console.log('order updated');
-			const order = JSON.stringify({progress: progBar.style.width});
-		});
+		const msg = {
+			progress: progBar.style.width,
+			orderId: order.id,
+			userId: order.userId
+		};
+
+		socket.emit('update order', JSON.stringify(msg));
 	});
 	div.appendChild(updateBtn);
 

@@ -22,12 +22,12 @@ function updateDisplay(data){
 	
 }
 
-function updateOrdersDisplay(order){
+function addOrder(order){
 	/* updates the display with order information
 	*/
 
-	const div = document.createElement('div');
-	div.setAttribute('id', order._id);
+	div = document.createElement('div');
+	div.setAttribute('id', '' + order.id);
 	const address = order.address;
 	const node = createElementTextNode('p', address);
 
@@ -90,14 +90,25 @@ function updateOrdersDisplay(order){
 	ordersDisplay.appendChild(div);
 }
 
-function updateOrdersProgress(order){
+function updateOrdersProgress(order, orderId){
 	/* updates the display with order information
 	*/
+
+	const progBar = document.getElementById(orderId).getElementsByClassName('progress')[0].getElementsByClassName('progress-bar')[0];
+	console.log(progBar);
+
 
 	let width = progBar.style.width;
 	width = +(width.slice(0, width.length -1));
 
-	progBar.style.width = width + 25 + '%';
+	progBar.style.width = order.progress;
+}
+
+function populateOrders(orders){
+	orders.forEach((order) =>{
+		addOrder(order);
+		updateOrdersProgress(order, order.id);
+	});
 }
 
 function main(){
@@ -108,18 +119,22 @@ function main(){
 		updateDisplay(data);
 	});
 
-	console.log('Henlo');
-
-	socket.on('deliver order', (data) =>{
-		console.log('received');
-		const order = JSON.parse(data);
-		updateOrdersDisplay(order);
-	});
-
 	socket.on('update order', (data) =>{
 		console.log('order updated');
 		const order = JSON.parse(data);
-		updateOrdersProgress(order);
+		console.log('ORDER ID', order.id);
+		let div = document.getElementById(order.id);
+		if (!div){
+			addOrder(order);
+			div = document.getElementById(order.id);
+		}
+		console.log('DIV', div);
+		updateOrdersProgress(order, order.id);
+	});
+
+	socket.on('populate orders', (data) =>{
+		const orders = JSON.parse(data);
+		populateOrders(orders);
 	});
 }
 

@@ -30,10 +30,11 @@ const Order = mongoose.model('Order');
 
 const redis = require('redis');
 const socketRedis = require('socket.io-redis');
-const redisStore = require('connect-redis')(session);
+// use redis as session store
+const sessionStore = require('connect-redis')(session);
 const client = redis.createClient();
 const ttl = 1000; // time to live in seconds for a key
-const clientBakery = redis.createClient();
+const store = redis.createClient();
 // publish and subscribe channels for each node instance
 const sub = redis.createClient();
 const pub = redis.createClient();
@@ -42,7 +43,7 @@ const pub = redis.createClient();
 
 const sessionOptions = {
 	secret: 'secret',
-	store: new redisStore({host: 'localhost', port: 6379, client: client, ttl: ttl}),
+	store: new sessionStore({host: 'localhost', port: 6379, client: client, ttl: ttl}),
 	saveUninitialized: false, 
 	resave: false 
 };
@@ -366,7 +367,7 @@ app.post('/order/new', (req, res) =>{
 	const promise = new Promise((fulfill, reject) =>{
 
 		// get list of all active bakeries
-		clientBakery.hkeys('activeBakeries', function(err, bakeries){
+		store.hkeys('activeBakeries', function(err, bakeries){
 			if (err){
 				reject(err);
 			}
@@ -396,9 +397,11 @@ app.post('/order/new', (req, res) =>{
 				console.log('added order', order.id);
 
 				// add orders to a bakery's list
-				clientBakery.lpush('bakery_' + bakeryId, order.id);
+				store.lpush('bakery_' + bakeryId, order.id);
+				// add orders to a client's list
+				store.lpush('client_' + req.user.id, order.id);
 				// add information to order information
-				clientBakery.hset('order_' + order.id, 'address', order.address);
+				store.hmset('order_' + order.id, 'address', order.address, 'userId', req.user.id, 'email', req.user.email);
 
 				const message = {
 					orderId: order.id,
@@ -407,7 +410,7 @@ app.post('/order/new', (req, res) =>{
 				};
 
 				// publish message in orders channel
-				pub.publish('orders', JSON.stringify(message));
+				pub.publish('new order', JSON.stringify(message));
 
 				res.send('success');
 			}
@@ -432,74 +435,108 @@ app.get('/bakery/list', (req, res) => {
 });
 
 app.get('/redis/reset', (req, res) => {
-	clientBakery.flushall();
+	store.flushall();
 	res.send('reset redis cache');
 });
 
 // ---- Redis ----
 
-sub.subscribe('orders');
+sub.subscribe('new order');
+sub.subscribe('update order');
 
 sub.on('message', function(channel, message){
 	console.log("Channel: " + channel);
 	const msg = JSON.parse(message);
-	
-	// get socket id to send to
-	const promise1 = new Promise((fulfill, reject) =>{
-		clientBakery.hget('activeBakeries', 'bakery_' + msg.bakeryId, function(err, socketId){
-			if (err){
-				reject(err);
-			}
-			else{
-				console.log('SOCKET ID', socketId);
-				fulfill(socketId);
-			}
+
+	if (channel === 'new order'){
+		// get bakery socket id to send to
+		const promise1 = new Promise((fulfill, reject) =>{
+			store.hget('activeBakeries', 'bakery_' + msg.bakeryId, function(err, socketId){
+				if (err){
+					reject(err);
+				}
+				else{
+					console.log('SOCKET ID', socketId);
+					fulfill(socketId);
+				}
+			});
+		}).catch((err) =>{
+			console.log(err);
 		});
-	}).catch((err) =>{
-		console.log(err);
-	});
-	
-	// get order information
-	const promise2 = new Promise((fulfill, reject) =>{
-		clientBakery.hgetall('order_' + msg.orderId, function(err, order){
-			if (err){
-				reject(err);
-			}
-			else{
-				fulfill(order);
-			}
+		
+		// get order information
+		const promise2 = new Promise((fulfill, reject) =>{
+			store.hgetall('order_' + msg.orderId, function(err, order){
+				if (err){
+					reject(err);
+				}
+				else{
+					fulfill(order);
+				}
+			});
 		});
-	});
 
-	// get user id to send to
-	const promise3 = new Promise((fulfill, reject) =>{
-		clientBakery.hgetall('order_' + msg.orderId, function(err, order){
-			if (err){
-				reject(err);
-			}
-			else{
-				console.log('USER ID', msg.userId);
-				fulfill(msg.userId);
-			}
+		// deliver the order to listening bakery
+		Promise.all([promise1, promise2]).then((data) =>{
+
+			//console.log(data);
+			const socketId = data[0];
+			const order = data[1];
+
+			console.log('SOCKET ID', socketId, 'ORDER', order);
+			console.log('USER ID', msg.userId);
+
+			order.id = msg.orderId;
+
+			// deliver order to bakery
+			io.to(socketId).emit('deliver order', JSON.stringify(order));
 		});
-	}).catch((err) =>{
-		console.log(err);
-	});
+	}
+	else if (channel === 'update order'){
 
-	// deliver the order to listening bakery
-	Promise.all([promise1, promise2, promise3]).then((data) =>{
+		// get client socket id to send to
+		const promise1 = new Promise((fulfill, reject) =>{
+			store.hget('activeClients', 'client_' + msg.userId, function(err, socketId){
+				if (err){
+					reject(err);
+				}
+				else{
+					console.log('SOCKET ID', socketId);
+					fulfill(socketId);
+				}
+			});
+		}).catch((err) =>{
+			console.log(err);
+		});
+		
+		// get order information
+		const promise2 = new Promise((fulfill, reject) =>{
+			store.hgetall('order_' + msg.orderId, function(err, order){
+				if (err){
+					reject(err);
+				}
+				else{
+					fulfill(order);
+				}
+			});
+		});
 
-		console.log(data);
-		const socketId = data[0];
-		const order = data[1];
-		const userId = data[2];
+		// deliver the order to listening client
+		Promise.all([promise1, promise2]).then((data) =>{
 
-		console.log('SOCKET ID', socketId, 'ORDER', order);
-		console.log('USER ID', userId);
+			//console.log(data);
+			const socketId = data[0];
+			const order = data[1];
 
-		io.to(socketId).emit('deliver order', JSON.stringify(order));
-		io.to(userId).emit('deliver order', JSON.stringify(order));	//deliver order to client
-	});
+			order.id = msg.orderId;
+
+			console.log('ORDER ID', order.id);
+
+			// update order on client side
+			io.to(socketId).emit('update order', JSON.stringify(order));
+		});
+	}
+
 });
 
 // ---- Socket.io ----
@@ -508,34 +545,120 @@ io.on('connection', socket =>{
 
 	const session = socket.request.session;
 
+	let user;
+
 	// prevent app from crashing in case a user is stuck polling on dashboard
 	if (!session.passport){
 		socket.disconnect();
 	}
 	else{
-		const user = session.passport.user;
+		user = session.passport.user;
 
 		console.log('connected socket', socket.id, 'with session', session.id);
 
 		// add a bakery info (as hash set) with key session.id to the Redis client
 		socket.on('start', function(){
 			
-			// store bakery hash in activeBakeries with user.id as key and session.id as value
-			clientBakery.hset('activeBakeries', 'bakery_' + user.id, socket.id);
-			
+			console.log(user.type);
+
+			if (user.type === 'baker'){
+				// store bakery hash in activeBakeries with user.id as key and session.id as value
+				store.hset('activeBakeries', 'bakery_' + user.id, socket.id);
+			}
+			else{
+				// store client hash in activeClients with user.id as key and session.id as value
+				store.hset('activeClients', 'client_' + user.id, socket.id);
+				
+				// grabs the clients's most recent orders
+				const promise = new Promise((fulfill, reject) =>{
+					store.llen('client_' + user.id, function(err, len){
+						if (err){
+							reject(err);
+						}
+						else{
+							fulfill(len);
+						}
+					});
+				});
+				promise.then((len) =>{
+					return new Promise((fulfill, reject) =>{
+						store.lrange('client_' + user.id, 0, len, function(err, orderIds){
+							if (err){
+								reject(err);
+							}
+							else{
+								fulfill(orderIds);
+							}
+						});
+					});
+				}).then((orderIds) =>{
+					const orderPromiseList = [];
+					orderIds.forEach((orderId) =>{
+						const orderPromise = new Promise((fulfill, reject) =>{
+							store.hgetall('order_' + orderId, function(err, order){
+								if (err){
+									reject(err);
+								}
+								else{
+									order.id = orderId;
+									fulfill(order);
+								}
+							});
+						});
+						orderPromiseList.push(orderPromise);
+					});
+					Promise.all(orderPromiseList).then((data) =>{
+						io.to(socket.id).emit('populate orders', JSON.stringify(data));
+					});
+				});
+			}
 
 			io.to(socket.id).emit('connected', 'connected successfully');
 		});
 	}
 
-	socket.on('disconnect', function(){
-		console.log('disconnected socket', socket.id, 'with session', socket.request.session.id);
-		// delete keys
-		clientBakery.hdel('activeBakeries', 'bakery_' + user.id, function(err){
+	socket.on('update order', function(data){
+		const order = JSON.parse(data);
+
+		// update the order progress
+		store.hset('order_' + order.orderId, 'progress', order.progress, function(err){
 			if (err){
 				console.log(err);
 			}
+			else{
+				console.log('updated order', order.orderId);
+				pub.publish('update order', data);
+			}
 		});
+
+	});
+
+	socket.on('disconnect', function(){
+		console.log('disconnected socket', socket.id, 'with session', socket.request.session.id);
+		// delete user key (key is ignored if does not exist)
+
+		if (user){
+			if (user.type === 'baker'){
+				store.hdel('activeBakeries', 'bakery_' + user.id, function(err){
+					if (err){
+						console.log(err);
+					}
+					else{
+						console.log('deleted bakery', user.id);
+					}
+				});
+			}
+			else{
+				store.hdel('activeClients', 'client_' + user.id, function(err){
+					if (err){
+						console.log(err);
+					}
+					else{
+						console.log('deleted client', user.id);
+					}
+				});
+			}
+		}
 	});
 });
 
