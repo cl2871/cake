@@ -327,7 +327,7 @@ app.get('/user/register', (req, res) => {
 });
 
 app.post('/user/register', passport.authenticate('user-register', {
-	successRedirect: '/', //TODO: this should be the user's online tracker
+	successRedirect: '/user/dashboard', //TODO: this should be the user's online tracker
 	failureRedirect: '/user/register',
 	failureFlash: true
 }));
@@ -339,11 +339,11 @@ app.get('/bakery/dashboard', bakeryAuthenticated, (req, res) => {
 	*/
 
 	console.log('Session Id', req.session.id, 'Bakery Id', req.user.id);
-	res.render('bakery_dashboard', {});
+	res.render('bakery_dashboard', {user: req.user});
 });
 
 app.get('/user/dashboard', clientAuthenticated, (req, res) => {
-	res.render('user_dashboard');
+	res.render('user_dashboard', {user: req.user});
 });
 
 app.get('/logout', function(req, res){
@@ -402,7 +402,8 @@ app.post('/order/new', (req, res) =>{
 
 				const message = {
 					orderId: order.id,
-					bakeryId: bakeryId
+					bakeryId: bakeryId,
+					userId: req.user.id
 				};
 
 				// publish message in orders channel
@@ -470,16 +471,34 @@ sub.on('message', function(channel, message){
 		});
 	});
 
+	// get user id to send to
+	const promise3 = new Promise((fulfill, reject) =>{
+		clientBakery.hgetall('order_' + msg.orderId, function(err, order){
+			if (err){
+				reject(err);
+			}
+			else{
+				console.log('USER ID', msg.userId);
+				fulfill(msg.userId);
+			}
+		});
+	}).catch((err) =>{
+		console.log(err);
+	});
+
 	// deliver the order to listening bakery
-	Promise.all([promise1, promise2]).then((data) =>{
+	Promise.all([promise1, promise2, promise3]).then((data) =>{
 
 		console.log(data);
 		const socketId = data[0];
 		const order = data[1];
+		const userId = data[2];
 
 		console.log('SOCKET ID', socketId, 'ORDER', order);
+		console.log('USER ID', userId);
 
 		io.to(socketId).emit('deliver order', JSON.stringify(order));
+		io.to(userId).emit('deliver order', JSON.stringify(order));	//deliver order to client
 	});
 });
 

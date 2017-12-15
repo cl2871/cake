@@ -4,5 +4,27 @@ body {
 	/*width: 60%;
 	margin: 0 auto;
 	text-align: center;*/
+
+	width: 90%;
+	margin: auto;
 }
 
+p {
+	margin: 15px 0px 15px 0px;
+}
+
+.progress{
+	margin: 30px;
+}
+
+.bar-step {
+    position:absolute;
+    margin-top:-20px;
+	z-index:1;
+    font-size:12px;
+}
+
+.label-txt {
+	display: inline-block;
+    color: black;
+}

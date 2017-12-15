@@ -1,7 +1,6 @@
 const socket = io();
 const ordersDisplay = document.getElementById('ordersDisplay');
 
-
 function createElementTextNode(type, text){
 	/* creates an element node that has a text node child
 	*/
@@ -88,22 +87,17 @@ function updateOrdersDisplay(order){
 	div.appendChild(node);
 	div.appendChild(progDiv);
 
-	const updateBtn = document.createElement('button');
-	updateBtn.textContent = "Completed";
-	updateBtn.addEventListener('click', function(evt){
-		let width = progBar.style.width;
-		width = +(width.slice(0, width.length -1));
-
-		progBar.style.width = width + 25 + '%';
-
-		socket.emit('update order', (data) =>{
-			console.log('order updated');
-			const order = JSON.stringify({progress: progBar.style.width});
-		});
-	});
-	div.appendChild(updateBtn);
-
 	ordersDisplay.appendChild(div);
+}
+
+function updateOrdersProgress(order){
+	/* updates the display with order information
+	*/
+
+	let width = progBar.style.width;
+	width = +(width.slice(0, width.length -1));
+
+	progBar.style.width = width + 25 + '%';
 }
 
 function main(){
@@ -114,10 +108,18 @@ function main(){
 		updateDisplay(data);
 	});
 
+	console.log('Henlo');
+
 	socket.on('deliver order', (data) =>{
 		console.log('received');
 		const order = JSON.parse(data);
 		updateOrdersDisplay(order);
+	});
+
+	socket.on('update order', (data) =>{
+		console.log('order updated');
+		const order = JSON.parse(data);
+		updateOrdersProgress(order);
 	});
 }
 
