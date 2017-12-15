@@ -14,29 +14,36 @@ function createElementTextNode(type, text){
 	return node;
 }
 
-function updateOrdersDisplay(orders){
-	/* creates an element node that has a text node child
+function updateDisplay(data){
+	/* updates the display with a text node
 	*/
 
-	const ordersQueue = orders.split(',');
+	const node = createElementTextNode('p', data);
+	document.body.append(node);
+	
+}
 
-	// clear out the display
-	while (ordersDisplay.hasChildNodes()) {
-		ordersDisplay.removeChild(ordersDisplay.lastChild);
-	}
+function updateOrdersDisplay(order){
+	/* updates the display with order information
+	*/
 
-	ordersQueue.forEach((order) =>{
-		const node = createElementTextNode('p', order);
-		ordersDisplay.append(node);
-	});
+	const address = order.address;
+	const node = createElementTextNode('p', address);
+	ordersDisplay.append(node);
 }
 
 function main(){
 
-	socket.emit('start', {message: 'Connected'});
+	socket.emit('start');
 
-	socket.on('deliver order', (orders) =>{
-		updateOrdersDisplay(orders);
+	socket.on('connected', (data) =>{
+		updateDisplay(data);
+	});
+
+	socket.on('deliver order', (data) =>{
+		console.log('received');
+		const order = JSON.parse(data);
+		updateOrdersDisplay(order);
 	});
 }
 
