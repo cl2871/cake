@@ -1,7 +1,17 @@
-<ul>
+<table>
+	<h1>Bakeries</h1>
+	<tr>
+		<th>Username</th>
+		<th>Name</th>
+		<th>Auth Id</th>
+		<th>Address</th>
+	</tr>
 	{{#each bakeries as |bakery|}}
-	<li>
-		{{bakery.name}}: {{bakery.address}}
-	</li>
+	<tr>
+		<td>{{bakery.bakeryId.username}}</td>
+		<td>{{bakery.name}}</td>
+		<td>{{bakery.bakeryId.id}}</td>
+		<td>{{bakery.address}}</td>
+	</tr>
 	{{/each}}
-</ul>
+</table>

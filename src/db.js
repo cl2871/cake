@@ -14,7 +14,7 @@ if (fs.existsSync(fn)) {
 }
 
 // require mongoose and connect to cake database
-const MONGO_PW = process.env.MONGO_PW || conf.mongo_pass;
+const MONGO_PW = conf.mongo_pass || process.env.MONGO_PW;
 const mongoose = require('mongoose');
 mongoose.connect('mongodb://chrisDaddy:' + MONGO_PW + '@cake-shard-00-00-zpoh0.mongodb.net:27017,cake-shard-00-01-zpoh0.mongodb.net:27017,cake-shard-00-02-zpoh0.mongodb.net:27017/test?ssl=true&replicaSet=Cake-shard-0&authSource=admin');
 //mongoose.connect('mongodb://localhost/cake');
@@ -43,7 +43,7 @@ const User = new mongoose.Schema({
 const Bakery = new mongoose.Schema({
 	bakeryId: {
 		type:mongoose.Schema.Types.ObjectId, 
-		ref: 'Bakery_Auth'
+		ref: 'BakeryAuth'
 	},
 	name: {
 		type: String,
@@ -76,7 +76,7 @@ const Bakery = new mongoose.Schema({
 });
 
 // Bakery Auth Schema
-const Bakery_Auth = new mongoose.Schema({
+const BakeryAuth = new mongoose.Schema({
 	username: {
 		type: String,
 		required: true
@@ -111,5 +111,5 @@ const Order = new mongoose.Schema({
 // models
 mongoose.model('User', User);
 mongoose.model('Bakery', Bakery);
-mongoose.model('Bakery_Auth', Bakery_Auth);
+mongoose.model('BakeryAuth', BakeryAuth);
 mongoose.model('Order', Order);
