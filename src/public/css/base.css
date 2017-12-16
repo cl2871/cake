@@ -13,6 +13,11 @@ p {
 	margin: 15px 0px 15px 0px;
 }
 
+.logoutBtn{
+	position: absolute;
+	right: 10%;
+}
+
 .progress{
 	margin: 30px;
 }
