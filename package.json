@@ -12,6 +12,7 @@
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.2",
     "connect-flash": "^0.1.1",
+    "connect-redis": "^3.3.2",
     "connect-roles": "^3.1.2",
     "express": "^4.16.2",
     "express-session": "^1.15.6",
@@ -19,7 +20,9 @@
     "mongoose": "^4.13.5",
     "passport": "^0.4.0",
     "passport-local": "^1.0.0",
+    "redis": "^2.8.0",
     "socket.io": "^2.0.4",
+    "socket.io-redis": "^5.2.0",
     "yelp-fusion": "^1.0.4"
   },
   "devDependencies": {
