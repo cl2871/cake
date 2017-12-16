@@ -15,7 +15,6 @@ const passport = require('passport'),
 const ConnectRoles = require('connect-roles');
 const user = new ConnectRoles();
 const bcrypt = require('bcryptjs');
-//const fs = require('fs');
 const flash = require('connect-flash');
 
 // ---- MongoDB Setup ----
@@ -26,24 +25,48 @@ const Bakery = mongoose.model('Bakery');
 const BakeryAuth = mongoose.model('BakeryAuth');
 const Order = mongoose.model('Order');
 
+// ---- Config ----
+
+// attempt to read in config file
+const fs = require('fs');
+const fn = path.join(__dirname, 'config.json');
+let conf = "";
+
+// if the config file exists, read it in
+if (fs.existsSync(fn)) {
+	const data = fs.readFileSync(fn);
+	conf = JSON.parse(data);
+}
+
+// ---- Variables ----
+
+// make redis_endpoint 'localhost' for local testing
+const redis_endpoint = process.env.REDIS_ENDPOINT || conf.redis_endpoint;
+// port 8081 is default for Elastic Beanstalk
+const port = process.env.port || 8081;
+
+const secret = conf.secret || process.env.SECRET;
+const PLACES_KEY = conf.places_key || process.env.PLACES_KEY;
+const YELP_KEY = conf.yelp_key || process.env.YELP_KEY;
+
 // ---- Redis Setup ----
 
 const redis = require('redis');
 const socketRedis = require('socket.io-redis');
 // use redis as session store
 const sessionStore = require('connect-redis')(session);
-const client = redis.createClient();
+const client = redis.createClient(6379, redis_endpoint);
 const ttl = 1000; // time to live in seconds for a key
-const store = redis.createClient();
+const store = redis.createClient(6379, redis_endpoint);
 // publish and subscribe channels for each node instance
-const sub = redis.createClient();
-const pub = redis.createClient();
+const sub = redis.createClient(6379, redis_endpoint);
+const pub = redis.createClient(6379, redis_endpoint);
 
 // ---- Session Middleware Setup ----
 
 const sessionOptions = {
-	secret: 'secret',
-	store: new sessionStore({host: 'localhost', port: 6379, client: client, ttl: ttl}),
+	secret: secret,
+	store: new sessionStore({host: redis_endpoint, port: 6379, client: client, ttl: ttl}),
 	saveUninitialized: false, 
 	resave: false 
 };
@@ -66,7 +89,7 @@ io.use(function(socket, next){
 	sessionMiddleware(socket.request, socket.request.res, next);
 });
 // adapter allows multiple socket.io nodes to broadcast + emit to each other
-io.adapter(socketRedis({ host: 'localhost', port: 6379 }));
+io.adapter(socketRedis({ host: redis_endpoint, port: 6379 }));
 
 // ---- Passport ----
 
@@ -253,14 +276,7 @@ passport.use('user-register', new LocalStrategy({
 	}
 )); 
 
-// ---- Variables ----
-
-// port 8081 is default for Elastic Beanstalk
-const port = process.env.port || 8081;
-const PLACES_KEY = process.env.PLACES_KEY;
-const YELP_KEY = process.env.YELP_KEY;
-
-// ---- Setup ----
+// ---- Misc App Setup ----
 
 // serve static files from public
 const publicPath = path.resolve(__dirname, "public");
@@ -445,6 +461,10 @@ sub.subscribe('new order');
 sub.subscribe('update order');
 
 sub.on('message', function(channel, message){
+	/* on message event, parse the message, collect relevant information, and then send a message to corresponding socket
+		note: promise-heavy to handle async access to redis
+	*/
+
 	console.log("Channel: " + channel);
 	const msg = JSON.parse(message);
 
